@@ -10,6 +10,8 @@ import lombok.extern.log4j.Log4j2;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Log4j2
@@ -24,15 +26,16 @@ public class NilmReader {
                 .build();
     }
 
-    public void readFile(Path path) {
+    public List<EdfDataset> readFile(Path path) {
         try (Reader reader = Files.newBufferedReader(path)) {
-            readSome(reader);
+            return readSome(reader);
         } catch (Exception e) {
             log.error("Exception occurred: " + e);
         }
+        return List.of();
     }
 
-    private void readSome(Reader reader) {
+    private List<EdfDataset> readSome(Reader reader) {
         CsvToBean<EdfDataset> csvReader = new CsvToBeanBuilder(reader)
                 .withType(EdfDataset.class)
                 .withSeparator(';')
@@ -42,9 +45,11 @@ public class NilmReader {
                 .build();
 
         Stream<EdfDataset> stream = csvReader.stream();
-        stream.limit(10)
-                .forEach(metric -> {
-                    log.info(metric);
-                });
+        Stream<EdfDataset> limited = stream.limit(10);
+        List<EdfDataset> datasetList = limited.collect(Collectors.toList());
+        datasetList.forEach(metric -> {
+            log.info(metric);
+        });
+        return datasetList;
     }
 }

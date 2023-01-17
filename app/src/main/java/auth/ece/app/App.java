@@ -3,12 +3,16 @@
  */
 package auth.ece.app;
 
+import auth.ece.app.model.EdfDataset;
+import auth.ece.app.model.Metric;
+import auth.ece.app.processor.EdfProcessor;
 import lombok.extern.log4j.Log4j2;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 @Log4j2
 public class App {
@@ -22,7 +26,11 @@ public class App {
             loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
             Path path = Paths.get(loc);
             NilmReader nilmReader = new NilmReader();
-            nilmReader.readFile(path);
+            List<EdfDataset> datasetList = nilmReader.readFile(path);
+            var processor = new EdfProcessor();
+            List<Metric> metrics = processor.transform(datasetList);
+            log.info("Metrics collected: " + metrics.size());
+            metrics.forEach(metric -> log.info(metric));
         } catch (URISyntaxException e) {
             log.error("URI syntax not correct, please check");
         }

@@ -1,12 +1,12 @@
 package auth.ece.app.model;
 
 import com.opencsv.bean.CsvBindByName;
-import lombok.ToString;
+import lombok.Data;
 
 /**
  * https://archive.ics.uci.edu/ml/datasets/Individual+household+electric+power+consumption
  */
-@ToString
+@Data
 public class EdfDataset {
 
     @CsvBindByName(column = "Date")
