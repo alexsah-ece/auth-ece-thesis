@@ -3,19 +3,28 @@
  */
 package auth.ece.app;
 
-import auth.ece.list.LinkedList;
+import lombok.extern.log4j.Log4j2;
 
-import static auth.ece.utilities.StringUtils.join;
-import static auth.ece.utilities.StringUtils.split;
-import static auth.ece.app.MessageUtils.getMessage;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import org.apache.commons.text.WordUtils;
-
+@Log4j2
 public class App {
     public static void main(String[] args) {
-        LinkedList tokens;
-        tokens = split(getMessage());
-        String result = join(tokens);
-        System.out.println(WordUtils.capitalize(result));
+        execute();
+    }
+
+    public static void execute() {
+        URI loc;
+        try {
+            loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
+            Path path = Paths.get(loc);
+            NilmReader nilmReader = new NilmReader();
+            nilmReader.readFile(path);
+        } catch (URISyntaxException e) {
+            log.error("URI syntax not correct, please check");
+        }
     }
 }

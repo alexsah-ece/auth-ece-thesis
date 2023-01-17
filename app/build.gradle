@@ -6,9 +6,25 @@ plugins {
     id 'auth.ece.java-application-conventions'
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     implementation 'org.apache.commons:commons-text'
     implementation project(':utilities')
+
+    implementation 'com.opencsv:opencsv:5.7.1'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    // Logging
+    implementation 'org.apache.logging.log4j:log4j-api:2.19.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
 }
 
 application {
