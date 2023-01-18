@@ -1,5 +1,6 @@
 package auth.ece.app.processor;
 
+import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.model.EdfMetric;
 import auth.ece.app.model.Metric;
 import auth.ece.app.model.MetricType;
@@ -15,12 +16,17 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Log4j2
-public class EdfProcessor {
+public class EdfProcessor implements DatasetProcessor {
     public List<Metric> transform(List<EdfMetric> edfMetricList) {
         return edfMetricList.stream()
-                .map(item -> edfDatasetToMetrics(item))
+                .map(item -> transform(item))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Metric> transform(DatasetMetric edfMetric) {
+        return edfDatasetToMetrics((EdfMetric) edfMetric);
     }
 
     private List<Metric> edfDatasetToMetrics(EdfMetric edfMetric) {

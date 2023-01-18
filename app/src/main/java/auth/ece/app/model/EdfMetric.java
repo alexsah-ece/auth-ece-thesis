@@ -1,29 +1,31 @@
 package auth.ece.app.model;
 
-import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvBindByPosition;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * https://archive.ics.uci.edu/ml/datasets/Individual+household+electric+power+consumption
  */
 @Data
-public class EdfMetric {
+@EqualsAndHashCode(callSuper=false)
+public class EdfMetric extends DatasetMetric {
 
-    @CsvBindByName(column = "Date")
+    @CsvBindByPosition(position = 0)
     String date;
 
-    @CsvBindByName(column = "Time")
+    @CsvBindByPosition(position = 1)
     String time;
 
-    @CsvBindByName(column = "Global_active_power")
+    @CsvBindByPosition(position = 2)
     Float activePower;
 
-    @CsvBindByName(column = "Global_reactive_power")
+    @CsvBindByPosition(position = 3)
     Float reactivePower;
 
-    @CsvBindByName(column = "Voltage")
+    @CsvBindByPosition(position = 4)
     Float voltage;
 
-    @CsvBindByName(column = "Global_intensity")
+    @CsvBindByPosition(position = 5)
     Float intensity;
 }

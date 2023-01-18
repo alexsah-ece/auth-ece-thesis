@@ -3,40 +3,41 @@
  */
 package auth.ece.app;
 
-import auth.ece.app.model.EdfMetric;
-import auth.ece.app.model.Metric;
+import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.processor.EdfProcessor;
 import auth.ece.app.publisher.ConsolePublisher;
 import lombok.extern.log4j.Log4j2;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Iterator;
 
 @Log4j2
 public class App {
 
-    private static double PUBLISH_RATE = 2;
-    public static void main(String[] args) {
+    private static double PUBLISH_RATE = 1;
+    private static int DAY_OFFSET = 0;
+    public static void main(String[] args) throws URISyntaxException {
         execute();
     }
 
-    public static void execute() {
-        URI loc;
-        try {
-            loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
-            Path path = Paths.get(loc);
-            NilmReader nilmReader = new NilmReader();
-            List<EdfMetric> datasetList = nilmReader.readFile(path);
+    public static void execute() throws URISyntaxException {
+        URI loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
+        Path path = Paths.get(loc);
+
+        try (Reader reader = Files.newBufferedReader(path)) {
+            NilmReader nilmReader = new NilmReader(DAY_OFFSET);
+            Iterator<DatasetMetric> iterator = nilmReader.readFile(reader);
             var processor = new EdfProcessor();
-            List<Metric> metrics = processor.transform(datasetList);
-            log.info("Metrics collected: " + metrics.size());
-            ConsolePublisher consolePublisher = new ConsolePublisher(PUBLISH_RATE);
-            consolePublisher.publishMetrics(metrics);
-        } catch (URISyntaxException e) {
-            log.error("URI syntax not correct, please check");
+            ConsolePublisher consolePublisher = new ConsolePublisher(PUBLISH_RATE, processor);
+            consolePublisher.publishMetrics(iterator);
+        } catch (IOException e){
+            log.error("Something went wrong with reading the dataset file");
         }
     }
 }

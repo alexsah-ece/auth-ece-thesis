@@ -1,42 +1,35 @@
 package auth.ece.app;
 
+import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.model.EdfMetric;
-import com.opencsv.CSVParser;
-import com.opencsv.CSVParserBuilder;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Iterator;
 
 @Log4j2
 public class NilmReader {
 
-    private CSVParser parser;
+    private int startDayIndex;
 
-    public NilmReader() {
-        parser = new CSVParserBuilder()
-                .withSeparator(';')
-                .withIgnoreQuotations(true)
-                .build();
-    }
-
-    public List<EdfMetric> readFile(Path path) {
-        try (Reader reader = Files.newBufferedReader(path)) {
-            return readSome(reader);
-        } catch (Exception e) {
-            log.error("Exception occurred: " + e);
+    public NilmReader(int startDayIndex) {
+        if (startDayIndex < 0) {
+            log.warn("Start day index provided is negative. Reading from 1st day");
+            this.startDayIndex = 0;
+        } else {
+            this.startDayIndex = startDayIndex;
         }
-        return List.of();
     }
 
-    private List<EdfMetric> readSome(Reader reader) {
-        CsvToBean<EdfMetric> csvReader = new CsvToBeanBuilder(reader)
+    public Iterator<DatasetMetric> readFile(Reader reader) {
+        return readSome(reader);
+    }
+
+    private Iterator<DatasetMetric> readSome(Reader reader) {
+        CsvToBean<DatasetMetric> csvReader = new CsvToBeanBuilder(reader)
+                .withSkipLines(calculateLinesToSkip())
                 .withType(EdfMetric.class)
                 .withSeparator(';')
                 .withIgnoreQuotations(true)
@@ -44,12 +37,17 @@ public class NilmReader {
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
 
-        Stream<EdfMetric> stream = csvReader.stream();
-        Stream<EdfMetric> limited = stream.limit(10);
-        List<EdfMetric> datasetList = limited.collect(Collectors.toList());
-        datasetList.forEach(metric -> {
-            log.info(metric);
-        });
-        return datasetList;
+        Iterator<DatasetMetric> iterator = csvReader.iterator();
+        return iterator;
+    }
+
+    /**
+     * Calculates how many lines to skip on the CSV file, based on the provided day offset.
+     * For EDF dataset, each line is 1 minute, so we can calculate 1440 as one day. The first line
+     * is the header, so we always skip it.
+     * @return lines to skip on csv read
+     */
+    private int calculateLinesToSkip() {
+        return 1440 * startDayIndex + 1;
     }
 }
