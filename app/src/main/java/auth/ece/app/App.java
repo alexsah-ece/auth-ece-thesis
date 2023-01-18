@@ -6,6 +6,7 @@ package auth.ece.app;
 import auth.ece.app.model.EdfDataset;
 import auth.ece.app.model.Metric;
 import auth.ece.app.processor.EdfProcessor;
+import auth.ece.app.publisher.ConsolePublisher;
 import lombok.extern.log4j.Log4j2;
 
 import java.net.URI;
@@ -16,6 +17,8 @@ import java.util.List;
 
 @Log4j2
 public class App {
+
+    private static double PUBLISH_RATE = 2;
     public static void main(String[] args) {
         execute();
     }
@@ -30,7 +33,8 @@ public class App {
             var processor = new EdfProcessor();
             List<Metric> metrics = processor.transform(datasetList);
             log.info("Metrics collected: " + metrics.size());
-            metrics.forEach(metric -> log.info(metric));
+            ConsolePublisher consolePublisher = new ConsolePublisher(PUBLISH_RATE);
+            consolePublisher.publishMetrics(metrics);
         } catch (URISyntaxException e) {
             log.error("URI syntax not correct, please check");
         }
