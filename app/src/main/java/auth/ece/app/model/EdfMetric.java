@@ -7,7 +7,7 @@ import lombok.Data;
  * https://archive.ics.uci.edu/ml/datasets/Individual+household+electric+power+consumption
  */
 @Data
-public class EdfDataset {
+public class EdfMetric {
 
     @CsvBindByName(column = "Date")
     String date;

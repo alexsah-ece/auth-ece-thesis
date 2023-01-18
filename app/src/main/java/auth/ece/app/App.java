@@ -3,7 +3,7 @@
  */
 package auth.ece.app;
 
-import auth.ece.app.model.EdfDataset;
+import auth.ece.app.model.EdfMetric;
 import auth.ece.app.model.Metric;
 import auth.ece.app.processor.EdfProcessor;
 import auth.ece.app.publisher.ConsolePublisher;
@@ -29,7 +29,7 @@ public class App {
             loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
             Path path = Paths.get(loc);
             NilmReader nilmReader = new NilmReader();
-            List<EdfDataset> datasetList = nilmReader.readFile(path);
+            List<EdfMetric> datasetList = nilmReader.readFile(path);
             var processor = new EdfProcessor();
             List<Metric> metrics = processor.transform(datasetList);
             log.info("Metrics collected: " + metrics.size());

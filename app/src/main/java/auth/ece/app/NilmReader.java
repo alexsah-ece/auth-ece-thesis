@@ -1,6 +1,6 @@
 package auth.ece.app;
 
-import auth.ece.app.model.EdfDataset;
+import auth.ece.app.model.EdfMetric;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.bean.CsvToBean;
@@ -26,7 +26,7 @@ public class NilmReader {
                 .build();
     }
 
-    public List<EdfDataset> readFile(Path path) {
+    public List<EdfMetric> readFile(Path path) {
         try (Reader reader = Files.newBufferedReader(path)) {
             return readSome(reader);
         } catch (Exception e) {
@@ -35,18 +35,18 @@ public class NilmReader {
         return List.of();
     }
 
-    private List<EdfDataset> readSome(Reader reader) {
-        CsvToBean<EdfDataset> csvReader = new CsvToBeanBuilder(reader)
-                .withType(EdfDataset.class)
+    private List<EdfMetric> readSome(Reader reader) {
+        CsvToBean<EdfMetric> csvReader = new CsvToBeanBuilder(reader)
+                .withType(EdfMetric.class)
                 .withSeparator(';')
                 .withIgnoreQuotations(true)
                 .withIgnoreEmptyLine(true)
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
 
-        Stream<EdfDataset> stream = csvReader.stream();
-        Stream<EdfDataset> limited = stream.limit(10);
-        List<EdfDataset> datasetList = limited.collect(Collectors.toList());
+        Stream<EdfMetric> stream = csvReader.stream();
+        Stream<EdfMetric> limited = stream.limit(10);
+        List<EdfMetric> datasetList = limited.collect(Collectors.toList());
         datasetList.forEach(metric -> {
             log.info(metric);
         });

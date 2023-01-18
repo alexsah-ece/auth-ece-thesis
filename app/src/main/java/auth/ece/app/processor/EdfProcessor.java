@@ -1,6 +1,6 @@
 package auth.ece.app.processor;
 
-import auth.ece.app.model.EdfDataset;
+import auth.ece.app.model.EdfMetric;
 import auth.ece.app.model.Metric;
 import auth.ece.app.model.MetricType;
 import lombok.extern.log4j.Log4j2;
@@ -16,25 +16,25 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class EdfProcessor {
-    public List<Metric> transform(List<EdfDataset> edfDatasetList) {
-        return edfDatasetList.stream()
+    public List<Metric> transform(List<EdfMetric> edfMetricList) {
+        return edfMetricList.stream()
                 .map(item -> edfDatasetToMetrics(item))
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 
-    private List<Metric> edfDatasetToMetrics(EdfDataset edfDataset) {
-        Instant timestamp = getTimestamp(edfDataset);
+    private List<Metric> edfDatasetToMetrics(EdfMetric edfMetric) {
+        Instant timestamp = getTimestamp(edfMetric);
         ArrayList<Metric> metrics = new ArrayList<>();
-        metrics.add(getActivePower(timestamp, edfDataset));
-        metrics.add(getReactivePower(timestamp, edfDataset));
-        metrics.add(getVoltage(timestamp, edfDataset));
-        metrics.add(getIntensity(timestamp, edfDataset));
+        metrics.add(getActivePower(timestamp, edfMetric));
+        metrics.add(getReactivePower(timestamp, edfMetric));
+        metrics.add(getVoltage(timestamp, edfMetric));
+        metrics.add(getIntensity(timestamp, edfMetric));
         return metrics;
     }
 
-    private Instant getTimestamp(EdfDataset edfDataset) {
-        String stringDate = String.join(",", edfDataset.getDate(), edfDataset.getTime());
+    private Instant getTimestamp(EdfMetric edfMetric) {
+        String stringDate = String.join(",", edfMetric.getDate(), edfMetric.getTime());
         String pattern = "d/M/uuuu,HH:mm:ss";
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, Locale.US);
         LocalDateTime localDateTime = LocalDateTime.parse(stringDate, dateTimeFormatter);
@@ -42,35 +42,35 @@ public class EdfProcessor {
         return instant;
     }
 
-    private Metric getActivePower(Instant timestamp, EdfDataset edfDataset) {
+    private Metric getActivePower(Instant timestamp, EdfMetric edfMetric) {
         return Metric.builder()
                 .metricType(MetricType.ACTIVE_POWER)
                 .timestamp(timestamp)
-                .value(edfDataset.getReactivePower().doubleValue())
+                .value(edfMetric.getReactivePower().doubleValue())
                 .build();
     }
 
-    private Metric getReactivePower(Instant timestamp, EdfDataset edfDataset) {
+    private Metric getReactivePower(Instant timestamp, EdfMetric edfMetric) {
         return Metric.builder()
                 .metricType(MetricType.REACTIVE_POWER)
                 .timestamp(timestamp)
-                .value(edfDataset.getActivePower().doubleValue())
+                .value(edfMetric.getActivePower().doubleValue())
                 .build();
     }
 
-    private Metric getVoltage(Instant timestamp, EdfDataset edfDataset) {
+    private Metric getVoltage(Instant timestamp, EdfMetric edfMetric) {
         return Metric.builder()
                 .metricType(MetricType.VOLTAGE)
                 .timestamp(timestamp)
-                .value(edfDataset.getVoltage().doubleValue())
+                .value(edfMetric.getVoltage().doubleValue())
                 .build();
     }
 
-    private Metric getIntensity(Instant timestamp, EdfDataset edfDataset) {
+    private Metric getIntensity(Instant timestamp, EdfMetric edfMetric) {
         return Metric.builder()
                 .metricType(MetricType.INTENSITY)
                 .timestamp(timestamp)
-                .value(edfDataset.getIntensity().doubleValue())
+                .value(edfMetric.getIntensity().doubleValue())
                 .build();
     }
 
