@@ -7,6 +7,7 @@ import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.processor.EdfProcessor;
 import auth.ece.app.publisher.ConsolePublisher;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.cli.*;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -20,10 +21,54 @@ import java.util.Iterator;
 @Log4j2
 public class App {
 
+    private static final String RATE_OPTION = "rate";
+    private static final String DAY_OFFSET_OPTION = "dayOffset";
+
     private static double PUBLISH_RATE = 1;
     private static int DAY_OFFSET = 0;
     public static void main(String[] args) throws URISyntaxException {
+        CommandLine cli = parseArgs(args);
+        try {
+            PUBLISH_RATE = Double.parseDouble(cli.getOptionValue(RATE_OPTION));
+        } catch (Exception e) {
+            log.error("Defaulting to 1 for publish rate, as could not read CLI input");
+            PUBLISH_RATE = 1;
+        }
+
+        try {
+            DAY_OFFSET = Integer.parseInt(cli.getOptionValue(DAY_OFFSET_OPTION));
+        } catch (Exception e) {
+            log.error("Defaulting to 0 for publish rate, as could not read CLI input");
+            DAY_OFFSET = 0;
+        }
         execute();
+    }
+
+    public static CommandLine parseArgs(String[] args) {
+        Options options = new Options();
+
+        Option publishRate = new Option("r", "rate", true, "Publishing rate");
+        publishRate.setRequired(true);
+
+        Option dayOffset = new Option("d", "dayOffset", true,
+                "Day offset from first dataset day to start publishing");
+        dayOffset.setRequired(true);
+
+        options.addOption(publishRate);
+        options.addOption(dayOffset);
+
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd;
+        try {
+            cmd = parser.parse(options, args);
+            return cmd;
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            formatter.printHelp("Need to specify all required options", options);
+            System.exit(1);
+        }
+        return null;
     }
 
     public static void execute() throws URISyntaxException {
