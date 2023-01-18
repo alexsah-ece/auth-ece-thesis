@@ -4,6 +4,7 @@
 
 plugins {
     id 'auth.ece.java-application-conventions'
+    id 'com.google.cloud.tools.jib' version '3.3.1'
 }
 
 repositories {
@@ -35,4 +36,17 @@ dependencies {
 application {
     // Define the main class for the application.
     mainClass = 'auth.ece.app.App'
+}
+
+// https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin
+// create local image with `gradle jibDockerBuild`
+jib {
+    to {
+        image = 'auth-ece/publisher:0.1.0'
+    }
+    container {
+        jvmFlags = []
+        mainClass = application.mainClassName
+        format = 'OCI'
+    }
 }
