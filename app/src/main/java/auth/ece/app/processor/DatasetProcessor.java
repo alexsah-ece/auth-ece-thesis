@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface DatasetProcessor {
     List<Metric> transform(DatasetMetric metric);
+    int getHouseholdId();
 }

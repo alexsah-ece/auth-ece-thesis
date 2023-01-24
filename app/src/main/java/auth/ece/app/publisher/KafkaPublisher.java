@@ -47,7 +47,7 @@ public class KafkaPublisher extends MetricPublisher {
         /* metric attribute - specific to the metric type. For example, for electricity:
         /* voltage, intensity, active power, reactive power
          */
-        return String.format("<household>.electricity.%s", metric.getMetricType());
+        return String.format("%d.electricity.%s", processor.getHouseholdId(), metric.getMetricType());
     }
 
     private MetricAvro transformToMetricAvro(Metric metric) {

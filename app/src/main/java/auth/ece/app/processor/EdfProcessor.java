@@ -17,6 +17,17 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class EdfProcessor implements DatasetProcessor {
+
+    private int householdId;
+
+    public EdfProcessor(int householdId) {
+        this.householdId = householdId;
+    }
+
+    public int getHouseholdId() {
+        return householdId;
+    }
+
     public List<Metric> transform(List<EdfMetric> edfMetricList) {
         return edfMetricList.stream()
                 .map(item -> transform(item))
@@ -49,36 +60,43 @@ public class EdfProcessor implements DatasetProcessor {
     }
 
     private Metric getActivePower(Instant timestamp, EdfMetric edfMetric) {
+        double coEff = 0.001;
         return Metric.builder()
                 .metricType(MetricType.ACTIVE_POWER)
                 .timestamp(timestamp)
-                .value(edfMetric.getReactivePower().doubleValue())
+                .value(getAdjustedValue(edfMetric.getReactivePower().doubleValue(), coEff))
                 .build();
     }
 
     private Metric getReactivePower(Instant timestamp, EdfMetric edfMetric) {
+        double coEff = 0.001;
         return Metric.builder()
                 .metricType(MetricType.REACTIVE_POWER)
                 .timestamp(timestamp)
-                .value(edfMetric.getActivePower().doubleValue())
+                .value(getAdjustedValue(edfMetric.getActivePower().doubleValue(), coEff))
                 .build();
     }
 
     private Metric getVoltage(Instant timestamp, EdfMetric edfMetric) {
+        double coEff = 0.001;
         return Metric.builder()
                 .metricType(MetricType.VOLTAGE)
                 .timestamp(timestamp)
-                .value(edfMetric.getVoltage().doubleValue())
+                .value(getAdjustedValue(edfMetric.getVoltage().doubleValue(), coEff))
                 .build();
     }
 
     private Metric getIntensity(Instant timestamp, EdfMetric edfMetric) {
+        double coEff = 0.001;
         return Metric.builder()
                 .metricType(MetricType.INTENSITY)
                 .timestamp(timestamp)
-                .value(edfMetric.getIntensity().doubleValue())
+                .value(getAdjustedValue(edfMetric.getIntensity().doubleValue(), coEff))
                 .build();
     }
 
+    private double getAdjustedValue(double value, double coEff) {
+        return value + (coEff * householdId);
+    }
 
 }

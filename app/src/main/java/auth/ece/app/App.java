@@ -28,8 +28,13 @@ public class App {
     private static final String RATE_OPTION = "rate";
     private static final String DAY_OFFSET_OPTION = "dayOffset";
 
+    private static final String HOUSEHOLD_ID_OPTION = "householdId";
+
     private static double PUBLISH_RATE = 1;
     private static int DAY_OFFSET = 0;
+
+    private static int HOUSEHOLD_ID = 0;
+
     public static void main(String[] args) throws URISyntaxException {
         CommandLine cli = parseArgs(args);
         try {
@@ -46,11 +51,18 @@ public class App {
             DAY_OFFSET = 0;
         }
 
+        try {
+            HOUSEHOLD_ID = Integer.parseInt(cli.getOptionValue(HOUSEHOLD_ID_OPTION));
+        } catch (Exception e) {
+            log.error("Defaulting to 0 for householdId, as could not read CLI input");
+            HOUSEHOLD_ID = 0;
+        }
+
         DatasetProcessor processor = getDatasetProcessor();
         MetricPublisher publisher = getMetricPublisher(processor);
         ConsoleConsumer consumer = new ConsoleConsumer();
-//        executeProducer(publisher);
-        executeConsumer(consumer);
+        executeProducer(publisher);
+//        executeConsumer(consumer);
     }
 
     public static MetricPublisher getMetricPublisher(DatasetProcessor processor) {
@@ -59,7 +71,7 @@ public class App {
     }
 
     public static DatasetProcessor getDatasetProcessor() {
-        return new EdfProcessor();
+        return new EdfProcessor(HOUSEHOLD_ID);
     }
 
     public static CommandLine parseArgs(String[] args) {
@@ -72,8 +84,13 @@ public class App {
                 "Day offset from first dataset day to start publishing");
         dayOffset.setRequired(true);
 
+        Option householdId = new Option("h", "householdId", true,
+                "Id of the household to simulate");
+        householdId.setRequired(true);
+
         options.addOption(publishRate);
         options.addOption(dayOffset);
+        options.addOption(householdId);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new DefaultParser();
