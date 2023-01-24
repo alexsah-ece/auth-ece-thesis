@@ -3,6 +3,7 @@
  */
 package auth.ece.app;
 
+import auth.ece.app.consumer.ConsoleConsumer;
 import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.processor.DatasetProcessor;
 import auth.ece.app.processor.EdfProcessor;
@@ -47,7 +48,9 @@ public class App {
 
         DatasetProcessor processor = getDatasetProcessor();
         MetricPublisher publisher = getMetricPublisher(processor);
-        execute(publisher);
+        ConsoleConsumer consumer = new ConsoleConsumer();
+//        executeProducer(publisher);
+        executeConsumer(consumer);
     }
 
     public static MetricPublisher getMetricPublisher(DatasetProcessor processor) {
@@ -85,8 +88,7 @@ public class App {
         }
         return null;
     }
-
-    public static void execute(MetricPublisher metricPublisher) throws URISyntaxException {
+    public static void executeProducer(MetricPublisher metricPublisher) throws URISyntaxException {
         URI loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
         Path path = Paths.get(loc);
 
@@ -97,5 +99,9 @@ public class App {
         } catch (IOException e){
             log.error("Something went wrong with reading the dataset file");
         }
+    }
+
+    public static void executeConsumer(ConsoleConsumer consumer) {
+        consumer.consume("metrics");
     }
 }
