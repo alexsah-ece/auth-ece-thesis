@@ -11,6 +11,11 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    // https://search.maven.org/artifact/org.apache.kafka/kafka-streams
+    kafkaVersion = '3.3.2'
+}
+
 dependencies {
     implementation 'org.apache.commons:commons-text'
     implementation 'commons-cli:commons-cli:1.5.0'
@@ -28,9 +33,19 @@ dependencies {
     // Logging
     implementation 'org.apache.logging.log4j:log4j-api:2.19.0'
     implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.19.0'
 
     // Guava
     implementation 'com.google.guava:guava:31.1-jre'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Kafka streams
+    implementation "org.apache.kafka:kafka-streams:${kafkaVersion}"
+
+    // Kafka clients
+    implementation "org.apache.kafka:kafka-clients:${kafkaVersion}"
 }
 
 application {

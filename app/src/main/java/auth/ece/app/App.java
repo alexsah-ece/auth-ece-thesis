@@ -4,8 +4,10 @@
 package auth.ece.app;
 
 import auth.ece.app.model.DatasetMetric;
+import auth.ece.app.processor.DatasetProcessor;
 import auth.ece.app.processor.EdfProcessor;
-import auth.ece.app.publisher.ConsolePublisher;
+import auth.ece.app.publisher.KafkaPublisher;
+import auth.ece.app.publisher.MetricPublisher;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
 
@@ -17,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Properties;
 
 @Log4j2
 public class App {
@@ -41,7 +44,19 @@ public class App {
             log.error("Defaulting to 0 for publish rate, as could not read CLI input");
             DAY_OFFSET = 0;
         }
-        execute();
+
+        DatasetProcessor processor = getDatasetProcessor();
+        MetricPublisher publisher = getMetricPublisher(processor);
+        execute(publisher);
+    }
+
+    public static MetricPublisher getMetricPublisher(DatasetProcessor processor) {
+//        return new ConsolePublisher(PUBLISH_RATE, processor);
+        return new KafkaPublisher(PUBLISH_RATE, processor, new Properties());
+    }
+
+    public static DatasetProcessor getDatasetProcessor() {
+        return new EdfProcessor();
     }
 
     public static CommandLine parseArgs(String[] args) {
@@ -71,16 +86,14 @@ public class App {
         return null;
     }
 
-    public static void execute() throws URISyntaxException {
+    public static void execute(MetricPublisher metricPublisher) throws URISyntaxException {
         URI loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
         Path path = Paths.get(loc);
 
         try (Reader reader = Files.newBufferedReader(path)) {
             NilmReader nilmReader = new NilmReader(DAY_OFFSET);
             Iterator<DatasetMetric> iterator = nilmReader.readFile(reader);
-            var processor = new EdfProcessor();
-            ConsolePublisher consolePublisher = new ConsolePublisher(PUBLISH_RATE, processor);
-            consolePublisher.publishMetrics(iterator);
+            metricPublisher.publishMetrics(iterator);
         } catch (IOException e){
             log.error("Something went wrong with reading the dataset file");
         }
