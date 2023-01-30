@@ -5,10 +5,12 @@ package auth.ece.app;
 
 import auth.ece.app.consumer.ConsoleConsumer;
 import auth.ece.app.model.DatasetMetric;
+import auth.ece.app.model.MetricType;
 import auth.ece.app.processor.DatasetProcessor;
 import auth.ece.app.processor.EdfProcessor;
 import auth.ece.app.publisher.KafkaPublisher;
 import auth.ece.app.publisher.MetricPublisher;
+import auth.ece.app.reader.EdfReader;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
 
@@ -20,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Properties;
 
 @Log4j2
@@ -30,10 +33,14 @@ public class App {
 
     private static final String HOUSEHOLD_ID_OPTION = "householdId";
 
-    private static double PUBLISH_RATE = 1;
-    private static int DAY_OFFSET = 0;
+    private static final String METER_TYPE_OPTION = "meterType";
 
-    private static int HOUSEHOLD_ID = 0;
+    private static double PUBLISH_RATE;
+    private static int DAY_OFFSET;
+
+    private static int HOUSEHOLD_ID;
+
+    private static MetricType METRIC_TYPE;
 
     public static void main(String[] args) throws URISyntaxException {
         CommandLine cli = parseArgs(args);
@@ -58,6 +65,13 @@ public class App {
             HOUSEHOLD_ID = 0;
         }
 
+        try {
+            METRIC_TYPE = MetricType.valueOf(cli.getOptionValue(METER_TYPE_OPTION).toUpperCase(Locale.ROOT));
+        } catch (Exception e) {
+            log.error("Defaulting to electricity for metric type, as could not read CLI input");
+            METRIC_TYPE = MetricType.ELECTRICITY;
+        }
+
         DatasetProcessor processor = getDatasetProcessor();
         MetricPublisher publisher = getMetricPublisher(processor);
         ConsoleConsumer consumer = new ConsoleConsumer();
@@ -77,20 +91,25 @@ public class App {
     public static CommandLine parseArgs(String[] args) {
         Options options = new Options();
 
-        Option publishRate = new Option("r", "rate", true, "Publishing rate");
+        Option publishRate = new Option("r", RATE_OPTION, true, "Publishing rate");
         publishRate.setRequired(true);
 
-        Option dayOffset = new Option("d", "dayOffset", true,
+        Option dayOffset = new Option("d", DAY_OFFSET_OPTION, true,
                 "Day offset from first dataset day to start publishing");
         dayOffset.setRequired(true);
 
-        Option householdId = new Option("h", "householdId", true,
+        Option householdId = new Option("h", HOUSEHOLD_ID_OPTION, true,
                 "Id of the household to simulate");
         householdId.setRequired(true);
+
+        Option meterType = new Option("t", METER_TYPE_OPTION, true,
+                "Meter type: electricity, water or gas");
+        meterType.setRequired(true);
 
         options.addOption(publishRate);
         options.addOption(dayOffset);
         options.addOption(householdId);
+        options.addOption(meterType);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new DefaultParser();
@@ -110,8 +129,8 @@ public class App {
         Path path = Paths.get(loc);
 
         try (Reader reader = Files.newBufferedReader(path)) {
-            NilmReader nilmReader = new NilmReader(DAY_OFFSET);
-            Iterator<DatasetMetric> iterator = nilmReader.readFile(reader);
+            EdfReader edfReader = new EdfReader(DAY_OFFSET);
+            Iterator<DatasetMetric> iterator = edfReader.readFile(reader);
             metricPublisher.publishMetrics(iterator);
         } catch (IOException e){
             log.error("Something went wrong with reading the dataset file");

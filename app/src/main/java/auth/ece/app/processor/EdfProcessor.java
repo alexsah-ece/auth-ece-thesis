@@ -1,9 +1,6 @@
 package auth.ece.app.processor;
 
-import auth.ece.app.model.DatasetMetric;
-import auth.ece.app.model.EdfMetric;
-import auth.ece.app.model.Metric;
-import auth.ece.app.model.MetricType;
+import auth.ece.app.model.*;
 import lombok.extern.log4j.Log4j2;
 
 import java.time.Instant;
@@ -62,7 +59,8 @@ public class EdfProcessor implements DatasetProcessor {
     private Metric getActivePower(Instant timestamp, EdfMetric edfMetric) {
         double coEff = 0.001;
         return Metric.builder()
-                .metricType(MetricType.ACTIVE_POWER)
+                .metricType(MetricType.ELECTRICITY)
+                .metricAttribute(MetricAttribute.ACTIVE_POWER)
                 .timestamp(timestamp)
                 .value(getAdjustedValue(edfMetric.getReactivePower().doubleValue(), coEff))
                 .build();
@@ -71,7 +69,8 @@ public class EdfProcessor implements DatasetProcessor {
     private Metric getReactivePower(Instant timestamp, EdfMetric edfMetric) {
         double coEff = 0.001;
         return Metric.builder()
-                .metricType(MetricType.REACTIVE_POWER)
+                .metricType(MetricType.ELECTRICITY)
+                .metricAttribute(MetricAttribute.REACTIVE_POWER)
                 .timestamp(timestamp)
                 .value(getAdjustedValue(edfMetric.getActivePower().doubleValue(), coEff))
                 .build();
@@ -80,7 +79,8 @@ public class EdfProcessor implements DatasetProcessor {
     private Metric getVoltage(Instant timestamp, EdfMetric edfMetric) {
         double coEff = 0.001;
         return Metric.builder()
-                .metricType(MetricType.VOLTAGE)
+                .metricType(MetricType.ELECTRICITY)
+                .metricAttribute(MetricAttribute.VOLTAGE)
                 .timestamp(timestamp)
                 .value(getAdjustedValue(edfMetric.getVoltage().doubleValue(), coEff))
                 .build();
@@ -89,7 +89,8 @@ public class EdfProcessor implements DatasetProcessor {
     private Metric getIntensity(Instant timestamp, EdfMetric edfMetric) {
         double coEff = 0.001;
         return Metric.builder()
-                .metricType(MetricType.INTENSITY)
+                .metricType(MetricType.ELECTRICITY)
+                .metricAttribute(MetricAttribute.INTENSITY)
                 .timestamp(timestamp)
                 .value(getAdjustedValue(edfMetric.getIntensity().doubleValue(), coEff))
                 .build();

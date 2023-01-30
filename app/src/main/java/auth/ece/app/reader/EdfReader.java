@@ -1,4 +1,4 @@
-package auth.ece.app;
+package auth.ece.app.reader;
 
 import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.model.EdfMetric;
@@ -10,11 +10,11 @@ import java.io.Reader;
 import java.util.Iterator;
 
 @Log4j2
-public class NilmReader {
+public class EdfReader {
 
     private int startDayIndex;
 
-    public NilmReader(int startDayIndex) {
+    public EdfReader(int startDayIndex) {
         if (startDayIndex < 0) {
             log.warn("Start day index provided is negative. Reading from 1st day");
             this.startDayIndex = 0;

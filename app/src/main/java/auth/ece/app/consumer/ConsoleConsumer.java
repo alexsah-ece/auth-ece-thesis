@@ -1,7 +1,7 @@
 package auth.ece.app.consumer;
 
 import auth.ece.app.model.Metric;
-import auth.ece.app.model.MetricType;
+import auth.ece.app.model.MetricAttribute;
 import auth.ece.model.avro.MetricAvro;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
@@ -51,10 +51,10 @@ public class ConsoleConsumer {
 
      private Metric trasnformToMetric(String key, MetricAvro metricAvro) {
         String[] split = key.split("\\.");
-        MetricType type = MetricType.valueOf(split[2]);
+        MetricAttribute type = MetricAttribute.valueOf(split[2]);
         return Metric.builder()
                 .timestamp(Instant.parse(metricAvro.getTimestamp()))
-                .metricType(type)
+                .metricAttribute(type)
                 .value(metricAvro.getValue())
                 .build();
      }

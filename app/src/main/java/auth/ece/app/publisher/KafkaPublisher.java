@@ -2,7 +2,6 @@ package auth.ece.app.publisher;
 
 import auth.ece.app.model.Metric;
 import auth.ece.app.processor.DatasetProcessor;
-import auth.ece.app.serde.MetricJsonSerializer;
 import auth.ece.model.avro.MetricAvro;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import lombok.extern.log4j.Log4j2;
@@ -47,7 +46,7 @@ public class KafkaPublisher extends MetricPublisher {
         /* metric attribute - specific to the metric type. For example, for electricity:
         /* voltage, intensity, active power, reactive power
          */
-        return String.format("%d.electricity.%s", processor.getHouseholdId(), metric.getMetricType());
+        return String.format("%d.%s.%s", processor.getHouseholdId(), metric.getMetricType(), metric.getMetricAttribute());
     }
 
     private MetricAvro transformToMetricAvro(Metric metric) {

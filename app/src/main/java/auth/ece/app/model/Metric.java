@@ -9,6 +9,7 @@ import java.time.Instant;
 @Builder
 public class Metric {
     private MetricType metricType;
+    private MetricAttribute metricAttribute;
     private Instant timestamp;
     private Double value;
 }
