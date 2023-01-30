@@ -10,26 +10,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 @Log4j2
-public class EdfProcessor implements DatasetProcessor {
-
-    private int householdId;
+public class EdfProcessor extends DatasetProcessor {
 
     public EdfProcessor(int householdId) {
-        this.householdId = householdId;
-    }
-
-    public int getHouseholdId() {
-        return householdId;
-    }
-
-    public List<Metric> transform(List<EdfMetric> edfMetricList) {
-        return edfMetricList.stream()
-                .map(item -> transform(item))
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        super(householdId);
     }
 
     @Override
@@ -95,9 +81,4 @@ public class EdfProcessor implements DatasetProcessor {
                 .value(getAdjustedValue(edfMetric.getIntensity().doubleValue(), coEff))
                 .build();
     }
-
-    private double getAdjustedValue(double value, double coEff) {
-        return value + (coEff * householdId);
-    }
-
 }

@@ -1,18 +1,15 @@
 package auth.ece.app.reader;
 
+import auth.ece.app.model.AMPds2Metric;
 import auth.ece.app.model.DatasetMetric;
-import auth.ece.app.model.EdfMetric;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
-import lombok.extern.log4j.Log4j2;
 
 import java.io.Reader;
 import java.util.Iterator;
 
-@Log4j2
-public class EdfReader extends DatasetReader {
-
-    public EdfReader(int startDayIndex) {
+public class AMPds2Reader extends DatasetReader {
+    public AMPds2Reader(int startDayIndex) {
         super(startDayIndex);
     }
 
@@ -24,8 +21,8 @@ public class EdfReader extends DatasetReader {
     private Iterator<DatasetMetric> readSome(Reader reader) {
         CsvToBean<DatasetMetric> csvReader = new CsvToBeanBuilder(reader)
                 .withSkipLines(calculateLinesToSkip())
-                .withType(EdfMetric.class)
-                .withSeparator(';')
+                .withType(AMPds2Metric.class)
+                .withSeparator(',')
                 .withIgnoreQuotations(true)
                 .withIgnoreEmptyLine(true)
                 .withIgnoreLeadingWhiteSpace(true)
@@ -36,7 +33,7 @@ public class EdfReader extends DatasetReader {
     }
 
     /**
-     * For EDF dataset, each line is 1 minute, so we can calculate 1440 as one day. The first line
+     * For AMPds2 dataset, each line is 1 minute, so we can calculate 1440 as one day. The first line
      * is the header, so we always skip it.
      * @return lines to skip on csv read
      */

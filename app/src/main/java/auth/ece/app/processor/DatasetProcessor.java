@@ -5,7 +5,20 @@ import auth.ece.app.model.Metric;
 
 import java.util.List;
 
-public interface DatasetProcessor {
-    List<Metric> transform(DatasetMetric metric);
-    int getHouseholdId();
+public abstract class DatasetProcessor {
+
+    protected int householdId;
+
+    public DatasetProcessor(int householdId) {
+        this.householdId = householdId;
+    }
+    public abstract List<Metric> transform(DatasetMetric metric);
+    public int getHouseholdId() {
+        return householdId;
+    };
+
+    protected double getAdjustedValue(double value, double coEff) {
+        return value + (coEff * householdId);
+    }
+
 }

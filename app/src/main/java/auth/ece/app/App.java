@@ -6,10 +6,13 @@ package auth.ece.app;
 import auth.ece.app.consumer.ConsoleConsumer;
 import auth.ece.app.model.DatasetMetric;
 import auth.ece.app.model.MetricType;
+import auth.ece.app.processor.AMPds2Processor;
 import auth.ece.app.processor.DatasetProcessor;
 import auth.ece.app.processor.EdfProcessor;
 import auth.ece.app.publisher.KafkaPublisher;
 import auth.ece.app.publisher.MetricPublisher;
+import auth.ece.app.reader.AMPds2Reader;
+import auth.ece.app.reader.DatasetReader;
 import auth.ece.app.reader.EdfReader;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
@@ -85,7 +88,33 @@ public class App {
     }
 
     public static DatasetProcessor getDatasetProcessor() {
-        return new EdfProcessor(HOUSEHOLD_ID);
+        switch (METRIC_TYPE) {
+            case ELECTRICITY:
+                return new EdfProcessor(HOUSEHOLD_ID);
+            default:
+                return new AMPds2Processor(HOUSEHOLD_ID, METRIC_TYPE);
+        }
+    }
+
+    public static DatasetReader getDatasetReader() {
+        switch (METRIC_TYPE) {
+            case ELECTRICITY:
+                return new EdfReader(DAY_OFFSET);
+            default:
+                return new AMPds2Reader(DAY_OFFSET);
+        }
+    }
+
+    public static String getFilePath() {
+        switch (METRIC_TYPE) {
+            case ELECTRICITY:
+                return "dataset/edf/household_power_consumption.txt";
+            case WATER:
+                return "dataset/ampds2/Water_WHW.csv";
+            case GAS:
+            default:
+                return "dataset/ampds2/NaturalGas_WHG.csv";
+        }
     }
 
     public static CommandLine parseArgs(String[] args) {
@@ -125,12 +154,12 @@ public class App {
         return null;
     }
     public static void executeProducer(MetricPublisher metricPublisher) throws URISyntaxException {
-        URI loc = ClassLoader.getSystemResource("dataset/edf/household_power_consumption.txt").toURI();
+        URI loc = ClassLoader.getSystemResource(getFilePath()).toURI();
         Path path = Paths.get(loc);
 
         try (Reader reader = Files.newBufferedReader(path)) {
-            EdfReader edfReader = new EdfReader(DAY_OFFSET);
-            Iterator<DatasetMetric> iterator = edfReader.readFile(reader);
+            DatasetReader datasetReader = getDatasetReader();
+            Iterator<DatasetMetric> iterator = datasetReader.readFile(reader);
             metricPublisher.publishMetrics(iterator);
         } catch (IOException e){
             log.error("Something went wrong with reading the dataset file");
