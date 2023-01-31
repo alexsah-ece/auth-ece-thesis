@@ -1,0 +1,15 @@
+{
+    "namespace": "auth.ece.common.model.avro",
+    "name": "MetricAvro",
+    "type": "record",
+    "fields": [
+        {
+            "name": "timestamp",
+            "type": "string"
+        },
+        {
+            "name": "value",
+            "type": "double"
+        }
+    ]
+}

@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'thesis-code'
-include('app', 'list', 'utilities')
+include('replay', 'consumer', 'common')
