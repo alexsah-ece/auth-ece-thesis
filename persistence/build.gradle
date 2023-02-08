@@ -1,0 +1,30 @@
+plugins {
+    id 'auth.ece.java-library-conventions'
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    // https://search.maven.org/artifact/com.datastax.oss
+    cassandraDriverVersion = '4.15.0'
+}
+
+dependencies {
+    implementation project(':common')
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    // Logging
+    implementation 'org.apache.logging.log4j:log4j-api:2.19.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.19.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.19.0'
+
+    // Cassandra
+    implementation "com.datastax.oss:java-driver-core:${cassandraDriverVersion}"
+}
