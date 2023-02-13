@@ -7,18 +7,18 @@ import java.util.List;
 
 public abstract class DatasetProcessor {
 
-    protected int householdId;
+    protected String gatewayId;
 
-    public DatasetProcessor(int householdId) {
-        this.householdId = householdId;
+    public DatasetProcessor(int gatewayId) {
+        this.gatewayId = Integer.toString(gatewayId);
     }
     public abstract List<Metric> transform(DatasetMetric metric);
-    public int getHouseholdId() {
-        return householdId;
-    };
+    public String getGatewayId() {
+        return gatewayId;
+    }
 
     protected double getAdjustedValue(double value, double coEff) {
-        return value + (coEff * householdId);
+        return value + (coEff * Integer.parseInt(gatewayId));
     }
 
 }

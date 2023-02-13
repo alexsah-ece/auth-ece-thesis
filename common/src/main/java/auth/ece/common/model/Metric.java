@@ -8,6 +8,7 @@ import java.time.Instant;
 @Data
 @Builder
 public class Metric {
+    private String gateway;
     private MetricType metricType;
     private MetricAttribute metricAttribute;
     private Instant timestamp;

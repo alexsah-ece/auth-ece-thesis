@@ -2,6 +2,7 @@ package auth.ece.consumer;
 
 import auth.ece.common.model.Metric;
 import auth.ece.common.model.MetricAttribute;
+import auth.ece.common.model.MetricType;
 import auth.ece.common.model.avro.MetricAvro;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
@@ -41,7 +42,7 @@ public class ConsoleConsumer {
                  ConsumerRecords<String, MetricAvro> records = consumer.poll(100);
                  for (ConsumerRecord<String, MetricAvro> record : records) {
                      log.info("offset = {}, key = {}, value = {}",
-                             record.offset(), record.key(), trasnformToMetric(record.key(), record.value()));
+                             record.offset(), record.key(), transformToMetric(record.key(), record.value()));
                  }
              }
          } finally {
@@ -49,13 +50,13 @@ public class ConsoleConsumer {
          }
      }
 
-     private Metric trasnformToMetric(String key, MetricAvro metricAvro) {
-        String[] split = key.split("\\.");
-        MetricAttribute type = MetricAttribute.valueOf(split[2]);
-        return Metric.builder()
-                .timestamp(Instant.parse(metricAvro.getTimestamp()))
-                .metricAttribute(type)
-                .value(metricAvro.getValue())
-                .build();
+     private Metric transformToMetric(String key, MetricAvro metricAvro) {
+         return Metric.builder()
+                 .gateway(metricAvro.getGateway())
+                 .metricType(MetricType.valueOf(metricAvro.getMetricType()))
+                 .timestamp(Instant.parse(metricAvro.getTimestamp()))
+                 .metricAttribute(MetricAttribute.valueOf(metricAvro.getMetricAttribute()))
+                 .value(metricAvro.getValue())
+                 .build();
      }
 }

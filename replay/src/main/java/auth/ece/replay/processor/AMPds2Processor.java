@@ -50,6 +50,7 @@ public class AMPds2Processor extends DatasetProcessor {
     private Metric getWaterIdd(Instant timestamp, AMPds2Metric metric) {
         double coEff = 0.001;
         return Metric.builder()
+                .gateway(gatewayId)
                 .metricType(MetricType.WATER)
                 .metricAttribute(MetricAttribute.WATER_IDD)
                 .timestamp(timestamp)
@@ -60,6 +61,7 @@ public class AMPds2Processor extends DatasetProcessor {
     private Metric getWaterSummation(Instant timestamp, AMPds2Metric metric) {
         double coEff = 0.001;
         return Metric.builder()
+                .gateway(gatewayId)
                 .metricType(MetricType.WATER)
                 .metricAttribute(MetricAttribute.WATER_SUMMATION)
                 .timestamp(timestamp)
@@ -70,6 +72,7 @@ public class AMPds2Processor extends DatasetProcessor {
     private Metric getGasIdd(Instant timestamp, AMPds2Metric metric) {
         double coEff = 0.001;
         return Metric.builder()
+                .gateway(gatewayId)
                 .metricType(MetricType.GAS)
                 .metricAttribute(MetricAttribute.GAS_IDD)
                 .timestamp(timestamp)
@@ -80,6 +83,7 @@ public class AMPds2Processor extends DatasetProcessor {
     private Metric getGasSummation(Instant timestamp, AMPds2Metric metric) {
         double coEff = 0.001;
         return Metric.builder()
+                .gateway(gatewayId)
                 .metricType(MetricType.GAS)
                 .metricAttribute(MetricAttribute.GAS_SUMMATION)
                 .timestamp(timestamp)

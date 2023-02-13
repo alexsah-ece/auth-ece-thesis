@@ -4,6 +4,18 @@
     "type": "record",
     "fields": [
         {
+            "name": "gateway",
+            "type": "string"
+        },
+        {
+            "name": "metricType",
+            "type": "string"
+        },
+        {
+            "name": "metricAttribute",
+            "type": "string"
+        },
+        {
             "name": "timestamp",
             "type": "string"
         },
