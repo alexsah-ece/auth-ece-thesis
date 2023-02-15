@@ -1,8 +1,12 @@
 package auth.ece.consumer;
 
-import org.apache.commons.cli.*;
-import org.apache.kafka.common.quota.ClientQuotaAlteration;
+import auth.ece.persistence.cassandra.CassandraDao;
+import com.datastax.oss.driver.api.core.CqlSession;
 
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.cli.*;
+
+@Log4j2
 public class App {
 
     private static final String SOURCE_TOPIC_OPTION = "sourceTopic";
@@ -13,13 +17,27 @@ public class App {
     public static void main(String[] args) {
         CommandLine cli = parseArgs(args);
         String sourceTopic = cli.getOptionValue(SOURCE_TOPIC_OPTION);
-        long windowDurationSeconds = Long.parseLong(cli.getOptionValue(WINDOW_DURATION_SECONDS_OPTION));
-        int clientId = Integer.parseInt(cli.getOptionValue(CLIENT_ID_OPTION));
+        long windowDurationSeconds;
+        try {
+            windowDurationSeconds = Long.parseLong(cli.getOptionValue(WINDOW_DURATION_SECONDS_OPTION));
+        } catch (Exception e) {
+            log.error("Defaulting to 60 for window duration, as could not read CLI input");
+            windowDurationSeconds = 60;
+        }
+        int clientId;
+        try {
+            clientId = Integer.parseInt(cli.getOptionValue(CLIENT_ID_OPTION));
+        } catch (Exception e) {
+            log.error("Defaulting to 1 for client id, as could not read CLI input");
+            clientId = 1;
+        }
 //        ConsoleConsumer consumer = new ConsoleConsumer();
 //        executeConsumer(consumer);
-        MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
-        aggregator.start();
+//        MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
+//        aggregator.start();
+        runCassandraSink(sourceTopic);
     }
+
     public static CommandLine parseArgs(String[] args) {
         Options options = new Options();
         Option sourceTopic = new Option("s", SOURCE_TOPIC_OPTION, true, "Source topic");
@@ -50,5 +68,13 @@ public class App {
 
     public static void executeConsumer(ConsoleConsumer consumer) {
         consumer.consume("metrics");
+    }
+
+    public static void runCassandraSink(String sourceTopic) {
+        try (CqlSession session = CqlSession.builder().build()) {
+            CassandraDao dao = new CassandraDao(session);
+            CassandraSink sink = new CassandraSink(sourceTopic, dao);
+            sink.consume();
+        }
     }
 }

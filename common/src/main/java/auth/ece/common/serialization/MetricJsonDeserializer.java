@@ -1,4 +1,4 @@
-package auth.ece.common.serde;
+package auth.ece.common.serialization;
 
 import auth.ece.common.converter.InstantConverter;
 import auth.ece.common.model.Metric;

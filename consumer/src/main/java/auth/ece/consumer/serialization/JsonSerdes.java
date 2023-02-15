@@ -4,6 +4,8 @@ import auth.ece.common.model.Metric;
 import auth.ece.common.serialization.JsonDeserializer;
 import auth.ece.common.serialization.JsonSerializer;
 import auth.ece.consumer.CustomAggregate;
+import com.datastax.oss.driver.api.core.metadata.schema.Describable;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 

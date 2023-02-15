@@ -3,11 +3,13 @@ package auth.ece.consumer;
 import auth.ece.common.model.MetricAttribute;
 import auth.ece.common.model.MetricType;
 import auth.ece.common.model.avro.MetricAvro;
+import lombok.Getter;
 import lombok.ToString;
 
 import java.time.Instant;
 
 @ToString
+@Getter
 public class CustomAggregate {
 
     private Instant windowStart;
