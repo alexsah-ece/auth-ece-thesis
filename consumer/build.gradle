@@ -23,6 +23,9 @@ ext {
 dependencies {
     implementation project(':common')
 
+    // CLI
+    implementation 'commons-cli:commons-cli:1.5.0'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
@@ -53,7 +56,7 @@ application {
 // create local image with `gradle jibDockerBuild`
 jib {
     to {
-        image = 'auth-ece/consumer:0.1.0'
+        image = 'auth-ece/aggregator:0.1.0'
     }
     container {
         jvmFlags = []
