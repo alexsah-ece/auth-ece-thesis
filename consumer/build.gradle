@@ -65,7 +65,7 @@ application {
 // create local image with `gradle jibDockerBuild`
 jib {
     to {
-        image = 'auth-ece/aggregator:0.1.0'
+        image = 'auth-ece/cassandra-writer:0.1.0'
     }
     container {
         jvmFlags = []

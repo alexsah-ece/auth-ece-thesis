@@ -12,6 +12,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 
 import org.apache.kafka.common.serialization.StringDeserializer;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 import java.util.Properties;
@@ -19,14 +20,20 @@ import java.util.Properties;
 @Log4j2
 public class CassandraSink {
 
-    private final String sourceTopic;
+    private final long windowDurationSeconds;
     private KafkaConsumer consumer;
+    private final ChronoUnit bucket;
+
+    private final String sourceTopic;
 
     private final CassandraDao cassandraDao;
 
-    public CassandraSink(String sourceTopic, CassandraDao cassandraDao) {
-        this.sourceTopic = sourceTopic;
+    public CassandraSink(CassandraDao cassandraDao, ChronoUnit bucket, long windowDurationSeconds) {
+        this.windowDurationSeconds = windowDurationSeconds;
         this.cassandraDao = cassandraDao;
+        this.bucket = bucket;
+
+        this.sourceTopic = MetricsAggregator.getTargetTopic(windowDurationSeconds);
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
@@ -46,13 +53,28 @@ public class CassandraSink {
                 ConsumerRecords<String, CustomAggregate> records = consumer.poll(100);
                 for (ConsumerRecord<String, CustomAggregate> record : records) {
                     var customAggregate = record.value();
+                    var aggMetric = transformToAggMetric(customAggregate);
                     log.info("offset = {}, key = {}, value = {}",
-                            record.offset(), record.key(), transformToAggMetric(customAggregate));
-                    cassandraDao.insertMinutelyMetric(customAggregate.getGateway(), transformToAggMetric(customAggregate));
+                            record.offset(), record.key(), aggMetric);
+                    insertToCassandra(customAggregate.getGateway(), aggMetric);
                 }
             }
         } finally {
             consumer.close();
+        }
+    }
+
+    private void insertToCassandra(String gateway, AggregateMetric metric) {
+        if (bucket == null) {
+            cassandraDao.insertNonBucketedMetric(gateway, metric);
+        } else if (bucket.equals(ChronoUnit.MINUTES)) {
+            cassandraDao.insertMinutelyBucketedMetric(gateway, metric);
+        } else if (bucket.equals(ChronoUnit.HOURS)) {
+            cassandraDao.insertHourlyBucketedMetric(gateway, metric);
+        } else if (bucket.equals(ChronoUnit.DAYS)){
+            cassandraDao.insertDailyBucketedMetric(gateway, metric);
+        } else if (bucket.equals(ChronoUnit.MONTHS)) {
+            cassandraDao.insertMonthlyBucketedMetric(gateway, metric);
         }
     }
 
@@ -69,5 +91,9 @@ public class CassandraSink {
 
     private String getAppId() {
         return String.format("cassandra-writer-%s", this.sourceTopic);
+    }
+
+    public static String getTargetTableName(long windowDurationSeconds) {
+        return String.format("metrics_aggregates_%d", windowDurationSeconds);
     }
 }

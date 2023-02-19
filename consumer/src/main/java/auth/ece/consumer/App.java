@@ -6,6 +6,8 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
 
+import java.time.temporal.ChronoUnit;
+
 @Log4j2
 public class App {
 
@@ -13,6 +15,8 @@ public class App {
     private static final String WINDOW_DURATION_SECONDS_OPTION = "windowDurationSeconds";
 
     private static final String CLIENT_ID_OPTION = "clientId";
+
+    private static final String BUCKET_OPTION = "bucket";
 
     public static void main(String[] args) {
         CommandLine cli = parseArgs(args);
@@ -31,11 +35,17 @@ public class App {
             log.error("Defaulting to 1 for client id, as could not read CLI input");
             clientId = 1;
         }
+        ChronoUnit bucket = null;
+        try {
+            bucket = ChronoUnit.valueOf(cli.getOptionValue(BUCKET_OPTION));
+        } catch (Exception e) {
+            log.warn("Was not able to parse any bucket option as CHRONO_UNIT, defaulting to null");
+        }
 //        ConsoleConsumer consumer = new ConsoleConsumer();
 //        executeConsumer(consumer);
 //        MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
 //        aggregator.start();
-        runCassandraSink(sourceTopic);
+        runCassandraSink(windowDurationSeconds, bucket);
     }
 
     public static CommandLine parseArgs(String[] args) {
@@ -48,9 +58,13 @@ public class App {
         Option clientId = new Option("c", CLIENT_ID_OPTION, true, "Client id to differentiate" +
                 " Kafka Streams apps. Make sure that this is unique per process for processes running in the same host");
 
+        Option bucket = new Option("b", BUCKET_OPTION, true, "Bucket to group metrics by when writing" +
+                " to cassandra");
+
         options.addOption(sourceTopic);
         options.addOption(windowDurationSeconds);
         options.addOption(clientId);
+        options.addOption(bucket);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new DefaultParser();
@@ -70,10 +84,11 @@ public class App {
         consumer.consume("metrics");
     }
 
-    public static void runCassandraSink(String sourceTopic) {
+    public static void runCassandraSink(long windowDurationSeconds, ChronoUnit bucket) {
         try (CqlSession session = CqlSession.builder().build()) {
-            CassandraDao dao = new CassandraDao(session);
-            CassandraSink sink = new CassandraSink(sourceTopic, dao);
+            String tableName = CassandraSink.getTargetTableName(windowDurationSeconds);
+            CassandraDao dao = new CassandraDao(session, tableName);
+            CassandraSink sink = new CassandraSink(dao, bucket, windowDurationSeconds);
             sink.consume();
         }
     }

@@ -43,7 +43,7 @@ public class MetricsAggregator {
 
         // set the required properties for running Kafka Streams
         props = new Properties();
-        props.put(StreamsConfig.APPLICATION_ID_CONFIG, getTargetTopic());
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, getTargetTopic(windowDurationSeconds));
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
         props.put("schema.registry.url", "http://localhost:8081");
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
@@ -97,7 +97,7 @@ public class MetricsAggregator {
                         .aggregate(
                                 initializer,
                                 aggregator,
-                                Materialized.<String, CustomAggregate, WindowStore<Bytes, byte[]>>as(getTargetTopic())
+                                Materialized.<String, CustomAggregate, WindowStore<Bytes, byte[]>>as(getTargetTopic(windowDurationSeconds))
                                         .withKeySerde(Serdes.String())
                                         .withValueSerde(JsonSerdes.CustomAggregate())
                         )
@@ -112,13 +112,13 @@ public class MetricsAggregator {
                     value.setWindowEnd(key.window().endTime());
                     return KeyValue.pair(key.key(), value);
                 })
-                .to(getTargetTopic(), Produced.with(Serdes.String(), JsonSerdes.CustomAggregate()));
+                .to(getTargetTopic(windowDurationSeconds), Produced.with(Serdes.String(), JsonSerdes.CustomAggregate()));
                 //.print(Printed.<Windowed<String>, CustomAggregate>toSysOut().withLabel(getTargetTopic()));
 
         return builder.build();
     }
 
-    private String getTargetTopic() {
+    public static String getTargetTopic(long windowDurationSeconds) {
         return String.format("metrics-aggregates-%d", windowDurationSeconds);
     }
 }

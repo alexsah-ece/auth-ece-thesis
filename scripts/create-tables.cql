@@ -1,38 +1,48 @@
 CREATE KEYSPACE IF NOT EXISTS metrics WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 
-CREATE TABLE IF NOT EXISTS metrics.metrics_minutely (
+CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_60 (
     gateway text,
     metric text,
     attribute text,
     bucket timestamp,
-    minute timestamp,
+    windowStart timestamp,
     min double,
     max double,
     avg double,
-    PRIMARY KEY ((gateway, metric, attribute, bucket), minute)
-) WITH CLUSTERING ORDER BY (minute DESC);
+    PRIMARY KEY ((gateway, metric, attribute, bucket), windowStart)
+) WITH CLUSTERING ORDER BY (windowStart DESC);
 
-
-CREATE TABLE IF NOT EXISTS metrics.metrics_hourly (
+CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_600 (
     gateway text,
     metric text,
     attribute text,
     bucket timestamp,
-    hour timestamp,
+    windowStart timestamp,
     min double,
     max double,
     avg double,
-    PRIMARY KEY ((gateway, metric, attribute, bucket), hour)
-) WITH CLUSTERING ORDER BY (hour DESC);
+    PRIMARY KEY ((gateway, metric, attribute, bucket), windowStart)
+) WITH CLUSTERING ORDER BY (windowStart DESC);
 
-
-CREATE TABLE IF NOT EXISTS metrics.metrics_monthly (
+CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_3600 (
     gateway text,
     metric text,
     attribute text,
-    month timestamp,
+    bucket timestamp,
+    windowStart timestamp,
     min double,
     max double,
     avg double,
-    PRIMARY KEY ((gateway, metric, attribute), month)
-) WITH CLUSTERING ORDER BY (month DESC);
+    PRIMARY KEY ((gateway, metric, attribute, bucket), windowStart)
+) WITH CLUSTERING ORDER BY (windowStart DESC);
+
+CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_86400 (
+    gateway text,
+    metric text,
+    attribute text,
+    windowStart timestamp,
+    min double,
+    max double,
+    avg double,
+    PRIMARY KEY ((gateway, metric, attribute), windowStart)
+) WITH CLUSTERING ORDER BY (windowStart DESC);
