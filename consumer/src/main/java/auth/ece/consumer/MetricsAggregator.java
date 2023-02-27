@@ -21,7 +21,8 @@ import java.util.Properties;
 @Log4j2
 public class MetricsAggregator {
 
-    private static final int GRACE_PERIOD_SEC = 10;
+    // 5 mins to enable high rate multiple parallel replay producers
+    private static final int GRACE_PERIOD_SEC = 60 * 5;
 
     private final long windowDurationSeconds;
     private final String sourceTopic;
