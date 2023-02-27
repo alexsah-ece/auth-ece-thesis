@@ -14,4 +14,5 @@ public class AggregateMetric {
     private Double avg;
     private Double max;
     private Double min;
+    private long sampleCount;
 }

@@ -86,6 +86,7 @@ public class CassandraSink {
                 .max(customAggregate.getMax())
                 .min(customAggregate.getMin())
                 .avg(customAggregate.getAverage())
+                .sampleCount(customAggregate.getSampleCount())
                 .build();
     }
 

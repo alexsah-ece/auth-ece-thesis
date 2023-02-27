@@ -12,7 +12,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 
 @Log4j2
 public class CassandraDao {
@@ -47,8 +46,8 @@ public class CassandraDao {
     private PreparedStatement getPreparedBucketedStatement() {
         // not coming from user input, safe from SQL injection
         String insertBucketed = new StringBuilder(String.format("insert into metrics.%s ", tableName))
-                .append("(gateway, metric, attribute, bucket, windowStart, min, max, avg) ")
-                .append(" VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+                .append("(gateway, metric, attribute, bucket, windowStart, min, max, avg, sampleCount) ")
+                .append(" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .toString();
         return session.prepare(insertBucketed);
     }
@@ -56,8 +55,8 @@ public class CassandraDao {
     private PreparedStatement getPreparedNonBucketedStatement() {
         // not coming from user input, safe from SQL injection
         String insertNonBucketed = new StringBuilder(String.format("insert into metrics.%s ", tableName))
-                .append("(gateway, metric, attribute, windowStart, min, max, avg) ")
-                .append(" VALUES (?, ?, ?, ?, ?, ?, ?)")
+                .append("(gateway, metric, attribute, windowStart, min, max, avg, sampleCount) ")
+                .append(" VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
                 .toString();
         return session.prepare(insertNonBucketed);
     }
@@ -73,6 +72,7 @@ public class CassandraDao {
                 .setDouble(5, metric.getMin())
                 .setDouble(6, metric.getMax())
                 .setDouble(7, metric.getAvg())
+                .setLong(8, metric.getSampleCount())
                 .build();
         session.execute(boundStatement);
     }
@@ -102,6 +102,7 @@ public class CassandraDao {
                 .setDouble(4, metric.getMin())
                 .setDouble(5, metric.getMax())
                 .setDouble(6, metric.getAvg())
+                .setLong(7, metric.getSampleCount())
                 .build();
         session.execute(boundStatement);
     }

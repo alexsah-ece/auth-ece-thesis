@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_60 (
     min double,
     max double,
     avg double,
+    sampleCount bigint,
     PRIMARY KEY ((gateway, metric, attribute, bucket), windowStart)
 ) WITH CLUSTERING ORDER BY (windowStart DESC);
 
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_600 (
     min double,
     max double,
     avg double,
+    sampleCount bigint,
     PRIMARY KEY ((gateway, metric, attribute, bucket), windowStart)
 ) WITH CLUSTERING ORDER BY (windowStart DESC);
 
@@ -33,6 +35,7 @@ CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_3600 (
     min double,
     max double,
     avg double,
+    sampleCount bigint,
     PRIMARY KEY ((gateway, metric, attribute, bucket), windowStart)
 ) WITH CLUSTERING ORDER BY (windowStart DESC);
 
@@ -44,5 +47,6 @@ CREATE TABLE IF NOT EXISTS metrics.metrics_aggregates_86400 (
     min double,
     max double,
     avg double,
+    sampleCount bigint,
     PRIMARY KEY ((gateway, metric, attribute), windowStart)
 ) WITH CLUSTERING ORDER BY (windowStart DESC);
