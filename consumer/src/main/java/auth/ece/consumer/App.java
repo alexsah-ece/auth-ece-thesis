@@ -18,6 +18,13 @@ public class App {
 
     private static final String BUCKET_OPTION = "bucket";
 
+    private static final String APPLICATION_TYPE = "applicationType";
+
+    enum ApplicationType {
+        AGGREGATOR,
+        CONSOLE_CONSUMER,
+        CASSANDRA_WRITER
+    }
     public static void main(String[] args) {
         CommandLine cli = parseArgs(args);
         String sourceTopic = cli.getOptionValue(SOURCE_TOPIC_OPTION);
@@ -41,15 +48,30 @@ public class App {
         } catch (Exception e) {
             log.warn("Was not able to parse any bucket option as CHRONO_UNIT, defaulting to null");
         }
-//        ConsoleConsumer consumer = new ConsoleConsumer();
-//        executeConsumer(consumer);
-//        MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
-//        aggregator.start();
-        runCassandraSink(windowDurationSeconds, bucket);
+        ApplicationType applicationType = null;
+        try {
+            applicationType = ApplicationType.valueOf(cli.getOptionValue(APPLICATION_TYPE));
+        } catch (Exception e) {
+            log.warn("Was not able to parse any application type option, defaulting to CONSOLE_CONSUMER");
+            applicationType = ApplicationType.CONSOLE_CONSUMER;
+        }
+        if (applicationType.equals(ApplicationType.AGGREGATOR)) {
+            MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
+            aggregator.start();
+        } else if (applicationType.equals(ApplicationType.CASSANDRA_WRITER)) {
+            runCassandraSink(windowDurationSeconds, bucket);
+        } else {
+            ConsoleConsumer consumer = new ConsoleConsumer();
+            executeConsumer(consumer);
+        }
     }
 
     public static CommandLine parseArgs(String[] args) {
         Options options = new Options();
+
+        Option applicationType = new Option("s", APPLICATION_TYPE, true, "Application to run. Can" +
+                " be one of AGGREGATOR, CONSOLE_CONSUMER, CASSANDRA_WRITER");
+
         Option sourceTopic = new Option("s", SOURCE_TOPIC_OPTION, true, "Source topic");
 
         Option windowDurationSeconds = new Option("w", WINDOW_DURATION_SECONDS_OPTION, true,
@@ -61,6 +83,7 @@ public class App {
         Option bucket = new Option("b", BUCKET_OPTION, true, "Bucket to group metrics by when writing" +
                 " to cassandra");
 
+        options.addOption(applicationType);
         options.addOption(sourceTopic);
         options.addOption(windowDurationSeconds);
         options.addOption(clientId);
