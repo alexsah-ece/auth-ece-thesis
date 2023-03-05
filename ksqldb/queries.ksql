@@ -1,0 +1,242 @@
+
+-- entrypoint
+docker exec -ti ksqldb-cli ksql http://ksqldb-server:8088
+
+-- read from the beginning of the topic
+SET 'auto.offset.reset' = 'earliest';
+
+
+-- handy to check if custom timestamp has been setup correctly -> needs to be same as ROWTIME
+
+SELECT FORMAT_TIMESTAMP(FROM_UNIXTIME(ROWTIME),'yyyy-MM-dd HH:mm:ss', 'UTC') AS ROWTIME_STR, `timestamp`
+ FROM metrics_
+ EMIT CHANGES LIMIT 5;
+
+------ create metrics stream using existing schema id on schema registry (registered by the publishers)
+
+CREATE STREAM metrics (
+    `rowkey` string key
+ ) WITH (
+    KAFKA_TOPIC='metrics',
+    VALUE_FORMAT='AVRO',
+    VALUE_SCHEMA_ID=1,
+    TIMESTAMP='`timestamp`',
+    TIMESTAMP_FORMAT='yyyy-MM-dd''T''HH:mm:ss''Z'''
+);
+
+SELECT * FROM metrics;
+
+CREATE STREAM metrics_ WITH (
+    KAFKA_TOPIC='metrics_',
+    VALUE_FORMAT='JSON',
+    PARTITIONS=4
+) AS SELECT * FROM metrics EMIT CHANGES;
+
+CREATE STREAM agg_60 (
+    `rowkey` string key,
+    `gateway` string,
+    `metricAttribute` string,
+    `metricType` string,
+    `sampleCount` bigint,
+    `average` double,
+    `min` double,
+    `max` double,
+    `windowStart` varchar,
+    `windowEnd` varchar
+) WITH (
+    kafka_topic='metrics-aggregates-60',
+    key_format='KAFKA',
+    value_format='JSON'
+);
+
+-- sample queries
+SELECT `rowkey`, `timestamp`, `value`
+FROM metrics
+WHERE `gateway`='0'
+AND `timestamp` BETWEEN '2006-12-16T18:23:00Z' AND '2006-12-16T18:32:00Z';
+
+SELECT `rowkey`, count(*)
+FROM metrics_
+GROUP BY `rowkey`
+EMIT CHANGES;
+
+-------------- alarms use case
+
+CREATE TABLE alarm_thresholds (
+    `rowkey` string PRIMARY KEY,
+    `lowerBound` double,
+    `upperBound` double
+) WITH (
+    KAFKA_TOPIC='alarm-thresholds',
+    VALUE_FORMAT='AVRO',
+    PARTITIONS=4
+);
+
+INSERT INTO alarm_thresholds (
+    `rowkey`,
+    `lowerBound`,
+    `upperBound`
+) VALUES (
+    '0.ELECTRICITY.ACTIVE_POWER',
+    0.0001,
+    10
+);
+
+INSERT INTO alarm_thresholds (
+    `rowkey`,
+    `lowerBound`,
+    `upperBound`
+) VALUES (
+    '1.ELECTRICITY.ACTIVE_POWER',
+    0.0001,
+    9
+);
+
+INSERT INTO alarm_thresholds (
+    `rowkey`,
+    `lowerBound`,
+    `upperBound`
+) VALUES (
+    '1.ELECTRICITY.INTENSITY',
+    1,
+    15
+);
+
+SELECT * FROM alarm_thresholds EMIT CHANGES;
+
+CREATE STREAM alarms WITH (
+    KAFKA_TOPIC='alarms',
+    VALUE_FORMAT='AVRO',
+    PARTITIONS=4
+) AS SELECT
+    m.`rowkey`,
+    m.`timestamp`,
+    m.`value`,
+    a.`lowerBound`,
+    a.`upperBound`,
+    CASE
+        WHEN m.`value` < a.`lowerBound` THEN 'UNDER'
+        ELSE 'OVER'
+    END AS `alarmType`
+FROM metrics_ m
+INNER JOIN alarm_thresholds a on m.`rowkey` = a.`rowkey`
+WHERE m.`value` < a.`lowerBound` OR m.`value` > a.`upperBound`
+EMIT CHANGES;
+
+SELECT * FROM ALARMS EMIT CHANGES;
+
+-- normal
+
+insert into metrics_ (
+    `rowkey`,
+    `gateway`,
+    `metricType`,
+    `metricAttribute`,
+    `timestamp`,
+    `value`
+) values (
+    '0.ELECTRICITY.ACTIVE_POWER',
+    '0',
+    'ELECTRICITY',
+    'ACTIVE_POWER',
+    '2006-12-16T17:58:15Z',
+    9.9
+);
+
+-- over
+insert into metrics_ (
+    `rowkey`,
+    `gateway`,
+    `metricType`,
+    `metricAttribute`,
+    `timestamp`,
+    `value`
+) values (
+    ''1.ELECTRICITY.INTENSITY',
+    '1',
+    'ELECTRICITY',
+    'INTENSITY',
+    '2006-12-16T17:58:15Z',
+    15.9
+);
+
+-- under
+insert into metrics_ (
+    `rowkey`,
+    `gateway`,
+    `metricType`,
+    `metricAttribute`,
+    `timestamp`,
+    `value`
+) values (
+    '1.ELECTRICITY.INTENSITY',
+    '1',
+    'ELECTRICITY',
+    'INTENSITY',
+    '2006-12-16T17:58:15Z',
+    0.1
+);
+
+-- update threshold & test overage with new incoming value
+
+INSERT INTO alarm_thresholds (
+    `rowkey`,
+    `lowerBound`,
+    `upperBound`
+) VALUES (
+    '1.ELECTRICITY.INTENSITY',
+    1,
+    16
+);
+
+insert into metrics_ (
+    `rowkey`,
+    `gateway`,
+    `metricType`,
+    `metricAttribute`,
+    `timestamp`,
+    `value`
+) values (
+    '1.ELECTRICITY.INTENSITY',
+    '1',
+    'ELECTRICITY',
+    'INTENSITY',
+    '2006-12-16T17:58:15Z',
+    16.1
+);
+
+
+-------------- messages sent per GW per 5-minute time-bucket for the past 4 time buckets
+
+CREATE TABLE device_uplink_count WITH (
+    KAFKA_TOPIC='device-uplink-count',
+    VALUE_FORMAT='AVRO',
+    PARTITIONS=4
+) AS
+    SELECT
+        `gateway`,
+        COUNT(*) as `uplinkCount`,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWSTART),'yyyy-MM-dd HH:mm:ss', 'UTC') AS SESSION_START_TS,
+        FORMAT_TIMESTAMP(FROM_UNIXTIME(WINDOWEND),'yyyy-MM-dd HH:mm:ss', 'UTC')   AS SESSION_END_TS
+
+    FROM metrics_
+    WINDOW TUMBLING (SIZE 5 MINUTE, RETENTION 20 MINUTE, GRACE PERIOD 3 MINUTE)
+    GROUP BY `gateway`
+    EMIT CHANGES;
+
+SELECT * FROM device_uplink_count WHERE `gateway`='1';
+
+
+-------------- latest-activity timestamps
+
+CREATE TABLE latest_activity WITH (
+    KAFKA_TOPIC='latest-activity',
+    VALUE_FORMAT='KAFKA',
+    PARTITIONS=4
+) AS
+    SELECT `gateway`, MAX(`timestamp`) as `latestTimestamp`
+    FROM metrics_
+    GROUP BY `gateway`
+    EMIT CHANGES;
+
+SELECT * FROM latest_activity;
