@@ -17,16 +17,17 @@ select * from metrics.metrics_aggregates_60
     and metric='ELECTRICITY'
     and attribute='ACTIVE_POWER'
     and bucket='2006-12-17'
-    and windowstart >= '2006-12-17 03:00:00'
-    and windowstart <= '2006-12-17 03:30:00';
+    and windowstart >= '2006-12-17 00:00:00'
+    and windowstart <= '2006-12-17 00:10:00';
 
 select * from metrics.metrics_aggregates_60
     where gateway='1'
     and metric='ELECTRICITY'
     and attribute='INTENSITY'
     and bucket='2006-12-17'
-    and windowstart >= '2006-12-17 03:00:00'
-    and windowstart <= '2006-12-17 03:30:00';
+    and windowstart >= '2006-12-17 00:00:00'
+    and windowstart <= '2006-12-17 00:10:00';
+
 
 // 10-minute queries
 select * from metrics.metrics_aggregates_600
@@ -63,7 +64,7 @@ select * from metrics.metrics_aggregates_3600
 select * from metrics.metrics_aggregates_86400
     where gateway='4'
     and metric='ELECTRICITY'
-    and attribute='ACTIVE_POWER'
+    and attribute='ACTIVE_POWER';
 
 
 

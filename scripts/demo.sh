@@ -74,6 +74,22 @@ docker run --label=cassandra-writer --network=host \
 docker run --label=cassandra-writer --network=host \
   auth-ece/consumer:0.1.0 --applicationType CASSANDRA_WRITER --windowDurationSeconds 86400
 
+# ---- KSQLDB
+
+docker exec -ti ksqldb-cli ksql http://ksqldb-server:8088
+
+# ---- Redis
+
+curl -X POST -H 'Content-Type: application/json' --data @kafka-connect-redis-config.json http://localhost:8083/connectors
+
+docker exec -ti redis redis-cli
+
+SELECT 1
+
+KEYS '*'
+
+GET <GW_ID>
+
 # ---- Clean up
 
 # -- Publisher

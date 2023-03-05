@@ -24,7 +24,9 @@ CREATE STREAM metrics (
     TIMESTAMP_FORMAT='yyyy-MM-dd''T''HH:mm:ss''Z'''
 );
 
-SELECT * FROM metrics;
+SELECT * FROM metrics EMIT CHANGES;
+
+SELECT * FROM metrics WHERE `gateway`='0' and `metricAttribute`='ACTIVE_POWER' EMIT CHANGES;
 
 CREATE STREAM metrics_ WITH (
     KAFKA_TOPIC='metrics_',
@@ -152,7 +154,7 @@ insert into metrics_ (
     `timestamp`,
     `value`
 ) values (
-    ''1.ELECTRICITY.INTENSITY',
+    '1.ELECTRICITY.INTENSITY',
     '1',
     'ELECTRICITY',
     'INTENSITY',
