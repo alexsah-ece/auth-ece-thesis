@@ -113,7 +113,6 @@ public class App {
     }
     public static DatasetProcessor getDatasetProcessor() {
         List<Integer> householdIdList = getHouseHoldIdList(HOUSEHOLD_ID_START, HOUSEHOLD_ID_END);
-        log.info("Household ids to run replay for: " + householdIdList);
         switch (METRIC_TYPE) {
             case ELECTRICITY:
                 return new EdfProcessor(householdIdList);
@@ -194,12 +193,9 @@ public class App {
         Path path = Paths.get(loc);
 
         try (Reader reader = Files.newBufferedReader(path)) {
-            long start = System.currentTimeMillis();
             DatasetReader datasetReader = getDatasetReader();
             Iterator<DatasetMetric> iterator = datasetReader.readFile(reader);
             metricPublisher.publishMetrics(iterator);
-            long end = System.currentTimeMillis();
-            log.info(String.format("Published %d messages in %d millis", MESSAGE_COUNT, end - start));
         } catch (IOException e){
             log.error("Something went wrong with reading the dataset file");
         }

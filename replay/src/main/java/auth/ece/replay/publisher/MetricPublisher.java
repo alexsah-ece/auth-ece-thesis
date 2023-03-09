@@ -24,6 +24,8 @@ public abstract class MetricPublisher {
 
     public void publishMetrics(Iterator<DatasetMetric> metricIterator) {
         long count = 0;
+        long start = System.currentTimeMillis();
+        log.info(String.format("Started publishing at %d", start));
         while (metricIterator.hasNext() && count < totalMessages) {
             DatasetMetric datasetMetric = metricIterator.next();
             List<Metric> metricList = processor.transform(datasetMetric);
@@ -34,7 +36,8 @@ public abstract class MetricPublisher {
                 }
             }
         }
-        log.info("Exiting after publishing message count: " + count);
+        long end = System.currentTimeMillis();
+        log.info(String.format("Exiting after publishing %d messages in %d millis", count,  end - start));
     }
 
     public void publishMetric(Metric metric) {
