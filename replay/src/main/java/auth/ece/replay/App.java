@@ -37,12 +37,16 @@ public class App {
 
     private static final String METER_TYPE_OPTION = "meterType";
 
+    private static final String MESSAGE_COUNT_OPTION = "messageCount";
+
     private static double PUBLISH_RATE;
     private static int DAY_OFFSET;
 
     private static int HOUSEHOLD_ID;
 
     private static MetricType METRIC_TYPE;
+
+    private static long MESSAGE_COUNT;
 
     public static void main(String[] args) throws URISyntaxException {
         CommandLine cli = parseArgs(args);
@@ -74,14 +78,21 @@ public class App {
             METRIC_TYPE = MetricType.ELECTRICITY;
         }
 
+        try {
+            MESSAGE_COUNT = Long.parseLong(cli.getOptionValue(MESSAGE_COUNT_OPTION));
+        } catch (Exception e) {
+            log.warn("Did not find a default value for message count; setting to: " + Long.MAX_VALUE);
+            MESSAGE_COUNT = Long.MAX_VALUE;
+        }
+
         DatasetProcessor processor = getDatasetProcessor();
         MetricPublisher publisher = getMetricPublisher(processor);
         executeProducer(publisher);
     }
 
     public static MetricPublisher getMetricPublisher(DatasetProcessor processor) {
-//        return new ConsolePublisher(PUBLISH_RATE, processor);
-        return new KafkaPublisher(PUBLISH_RATE, processor, new Properties());
+//        return new ConsolePublisher(MESSAGE_COUNT, PUBLISH_RATE, processor);
+        return new KafkaPublisher(MESSAGE_COUNT, PUBLISH_RATE, processor, new Properties());
     }
 
     public static DatasetProcessor getDatasetProcessor() {
@@ -132,10 +143,15 @@ public class App {
                 "Meter type: electricity, water or gas");
         meterType.setRequired(true);
 
+        Option messageCount = new Option("c", MESSAGE_COUNT_OPTION, true,
+                "How many messages should the publisher send before exiting");
+        meterType.setRequired(true);
+
         options.addOption(publishRate);
         options.addOption(dayOffset);
         options.addOption(householdId);
         options.addOption(meterType);
+        options.addOption(messageCount);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new DefaultParser();

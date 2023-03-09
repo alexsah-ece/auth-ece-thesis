@@ -7,8 +7,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ConsolePublisher extends MetricPublisher {
 
-    public ConsolePublisher(double permitsPerSecond, DatasetProcessor datasetProcessor) {
-        super(permitsPerSecond, datasetProcessor);
+    public ConsolePublisher(long count, double permitsPerSecond, DatasetProcessor datasetProcessor) {
+        super(count, permitsPerSecond, datasetProcessor);
     }
 
     @Override

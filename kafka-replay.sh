@@ -12,7 +12,8 @@ function publish_electricity() {
     while [ $counter -lt $households ]
     do
         echo "Starting up electricity publisher: $counter"
-        docker run --label=electricity-publisher --label=ece-publisher --network=host -d $IMAGE_TAG -r $1 -d $2 -h $counter -t electricity
+        docker run --label=electricity-publisher --label=ece-publisher --network=host -d $IMAGE_TAG \
+          -r $1 -d $2 -h $counter -t electricity -c $3
         ((counter++))
     done
 }
@@ -23,7 +24,8 @@ function publish_water() {
     while [ $counter -lt $households ]
     do
         echo "Starting up water publisher: $counter"
-        docker run --label=water-publisher --label=ece-publisher --network=host -d $IMAGE_TAG -r $1 -d $2 -h $counter -t water
+        docker run --label=water-publisher --label=ece-publisher --network=host -d $IMAGE_TAG \
+          -r $1 -d $2 -h $counter -t water -c $3
         ((counter++))
     done
 }
@@ -34,30 +36,32 @@ function publish_gas() {
     while [ $counter -lt $households ]
     do
         echo "Starting up gas publisher: $counter"
-        docker run --label=gas-publisher --label=ece-publisher --network=host -d $IMAGE_TAG -r $1 -d $2 -h $counter -t gas
+        docker run --label=gas-publisher --label=ece-publisher --network=host -d $IMAGE_TAG \
+          -r $1 -d $2 -h $counter -t gas -c $3 &
         ((counter++))
     done
 }
 
 
-while getopts r:d:h:t: flag
+while getopts r:d:h:t:c: flag
 do
     case "${flag}" in
         r) rate=${OPTARG};;
         d) dayOffset=${OPTARG};;
         h) households=${OPTARG};;
         t) metricType=${OPTARG};;
+        c) messageCount=${OPTARG};;
     esac
 done
 
 echo "metricType=$metricType"
 
 if [ $metricType == '1' ]
-    then publish_electricity $rate $dayOffset
+    then publish_electricity $rate $dayOffset $messageCount
 elif [ $metricType == '2' ]
-    then publish_water $rate $dayOffset
+    then publish_water $rate $dayOffset $messageCount
 elif [ $metricType == '3' ]
-    then publish_gas $rate $dayOffset
+    then publish_gas $rate $dayOffset $messageCount
 else
     echo "Not a valid type, skipping"
 fi

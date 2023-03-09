@@ -15,8 +15,8 @@ public class KafkaPublisher extends MetricPublisher {
 
     private KafkaProducer producer;
 
-    public KafkaPublisher(double permitsPerSecond, DatasetProcessor datasetProcessor, Properties kafkaProps) {
-        super(permitsPerSecond, datasetProcessor);
+    public KafkaPublisher(long count, double permitsPerSecond, DatasetProcessor datasetProcessor, Properties kafkaProps) {
+        super(count, permitsPerSecond, datasetProcessor);
         kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
         kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
