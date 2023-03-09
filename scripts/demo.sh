@@ -113,3 +113,12 @@ docker rm --force  $(docker ps --filter label=aggregator -q)
 # remove all cassandra writer instances
 docker rm --force  $(docker ps --filter label=cassandra-writer -q)
 
+# -- Reset state of kafka-streams application
+
+# https://www.confluent.io/blog/data-reprocessing-with-kafka-streams-resetting-a-streams-application/
+
+docker exec -i kafka kafka-streams-application-reset --application-id metrics-aggregates-60 \
+                                      --input-topics metrics \
+                                      --bootstrap-servers kafka:9092 \
+                                      --zookeeper zookeeper:32181
+
