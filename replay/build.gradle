@@ -64,7 +64,7 @@ application {
 // create local image with `gradle jibDockerBuild`
 jib {
     to {
-        image = 'auth-ece/publisher:0.1.0'
+        image = 'auth-ece/publisher:0.2.0'
     }
     container {
         jvmFlags = []

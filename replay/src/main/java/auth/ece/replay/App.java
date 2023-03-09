@@ -23,9 +23,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 
 @Log4j2
 public class App {
@@ -33,7 +31,9 @@ public class App {
     private static final String RATE_OPTION = "rate";
     private static final String DAY_OFFSET_OPTION = "dayOffset";
 
-    private static final String HOUSEHOLD_ID_OPTION = "householdId";
+    private static final String HOUSEHOLD_ID_START_OPTION = "householdIdStart";
+
+    private static final String HOUSEHOLD_ID_END_OPTION = "householdIdEnd";
 
     private static final String METER_TYPE_OPTION = "meterType";
 
@@ -42,7 +42,9 @@ public class App {
     private static double PUBLISH_RATE;
     private static int DAY_OFFSET;
 
-    private static int HOUSEHOLD_ID;
+    private static int HOUSEHOLD_ID_START;
+
+    private static int HOUSEHOLD_ID_END;
 
     private static MetricType METRIC_TYPE;
 
@@ -65,10 +67,17 @@ public class App {
         }
 
         try {
-            HOUSEHOLD_ID = Integer.parseInt(cli.getOptionValue(HOUSEHOLD_ID_OPTION));
+            HOUSEHOLD_ID_START = Integer.parseInt(cli.getOptionValue(HOUSEHOLD_ID_START_OPTION));
         } catch (Exception e) {
-            log.error("Defaulting to 0 for householdId, as could not read CLI input");
-            HOUSEHOLD_ID = 0;
+            log.error("Defaulting to 0 for householdIdStart, as could not read CLI input");
+            HOUSEHOLD_ID_START = 0;
+        }
+
+        try {
+            HOUSEHOLD_ID_END = Integer.parseInt(cli.getOptionValue(HOUSEHOLD_ID_END_OPTION));
+        } catch (Exception e) {
+            log.error("Defaulting to 0 for householdIdEnd, as could not read CLI input");
+            HOUSEHOLD_ID_END = 0;
         }
 
         try {
@@ -95,12 +104,21 @@ public class App {
         return new KafkaPublisher(MESSAGE_COUNT, PUBLISH_RATE, processor, new Properties());
     }
 
+    public static List<Integer> getHouseHoldIdList(int startingOffset, int endingOffset) {
+        List<Integer> idList = new ArrayList<>(endingOffset - startingOffset + 1);
+        for (int i = startingOffset; i <= endingOffset; i++) {
+            idList.add(i);
+        }
+        return idList;
+    }
     public static DatasetProcessor getDatasetProcessor() {
+        List<Integer> householdIdList = getHouseHoldIdList(HOUSEHOLD_ID_START, HOUSEHOLD_ID_END);
+        log.info("Household ids to run replay for: " + householdIdList);
         switch (METRIC_TYPE) {
             case ELECTRICITY:
-                return new EdfProcessor(HOUSEHOLD_ID);
+                return new EdfProcessor(householdIdList);
             default:
-                return new AMPds2Processor(HOUSEHOLD_ID, METRIC_TYPE);
+                return new AMPds2Processor(householdIdList, METRIC_TYPE);
         }
     }
 
@@ -135,9 +153,13 @@ public class App {
                 "Day offset from first dataset day to start publishing");
         dayOffset.setRequired(true);
 
-        Option householdId = new Option("h", HOUSEHOLD_ID_OPTION, true,
-                "Id of the household to simulate");
-        householdId.setRequired(true);
+        Option householdIdStart = new Option("s", HOUSEHOLD_ID_START_OPTION, true,
+                "Starting Id of the range of households to simulate");
+        householdIdStart.setRequired(true);
+
+        Option householdIdEnd = new Option("e", HOUSEHOLD_ID_END_OPTION, true,
+                "Ending Id of the range of households to simulate");
+        householdIdEnd.setRequired(true);
 
         Option meterType = new Option("t", METER_TYPE_OPTION, true,
                 "Meter type: electricity, water or gas");
@@ -149,7 +171,8 @@ public class App {
 
         options.addOption(publishRate);
         options.addOption(dayOffset);
-        options.addOption(householdId);
+        options.addOption(householdIdStart);
+        options.addOption(householdIdEnd);
         options.addOption(meterType);
         options.addOption(messageCount);
 
@@ -171,9 +194,12 @@ public class App {
         Path path = Paths.get(loc);
 
         try (Reader reader = Files.newBufferedReader(path)) {
+            long start = System.currentTimeMillis();
             DatasetReader datasetReader = getDatasetReader();
             Iterator<DatasetMetric> iterator = datasetReader.readFile(reader);
             metricPublisher.publishMetrics(iterator);
+            long end = System.currentTimeMillis();
+            log.info(String.format("Published %d messages in %d millis", MESSAGE_COUNT, end - start));
         } catch (IOException e){
             log.error("Something went wrong with reading the dataset file");
         }

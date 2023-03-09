@@ -34,7 +34,7 @@ public class KafkaPublisher extends MetricPublisher {
     }
     @Override
     public void publish(Metric metric) {
-        log.info("Publishing " + metric);
+        log.debug("Publishing " + metric);
         ProducerRecord<String, MetricAvro> record =
                 new ProducerRecord<>("metrics", getRoutingKey(metric), transformToMetricAvro(metric));
         producer.send(record, new DemoProducerCallback());
@@ -46,7 +46,7 @@ public class KafkaPublisher extends MetricPublisher {
         /* metric attribute - specific to the metric type. For example, for electricity:
         /* voltage, intensity, active power, reactive power
          */
-        return String.format("%s.%s.%s", processor.getGatewayId(), metric.getMetricType(), metric.getMetricAttribute());
+        return String.format("%s.%s.%s", metric.getGateway(), metric.getMetricType(), metric.getMetricAttribute());
     }
 
     private MetricAvro transformToMetricAvro(Metric metric) {

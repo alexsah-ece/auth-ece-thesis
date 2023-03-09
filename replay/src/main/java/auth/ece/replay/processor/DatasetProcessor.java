@@ -4,21 +4,21 @@ import auth.ece.replay.model.DatasetMetric;
 import auth.ece.common.model.Metric;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class DatasetProcessor {
 
-    protected String gatewayId;
+    protected List<String> gatewayIdList;
 
-    public DatasetProcessor(int gatewayId) {
-        this.gatewayId = Integer.toString(gatewayId);
+    public DatasetProcessor(List<Integer> gatewayIdList) {
+        this.gatewayIdList = gatewayIdList.stream()
+                .map(gwId -> Integer.toString(gwId))
+                .collect(Collectors.toList());
     }
     public abstract List<Metric> transform(DatasetMetric metric);
-    public String getGatewayId() {
-        return gatewayId;
-    }
 
-    protected double getAdjustedValue(double value, double coEff) {
-        return value + (coEff * Integer.parseInt(gatewayId));
+    protected double getAdjustedValue(double value, double coEff, String gwId) {
+        return value + (coEff * Integer.parseInt(gwId));
     }
 
 }

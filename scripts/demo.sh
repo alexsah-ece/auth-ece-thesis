@@ -11,7 +11,7 @@ docker exec -ti cassandra cqlsh
 
 # ---- Publisher
 
-# bash? or custom manual command?
+## -- low throughput
 
 # publish electricity for 5 households
 ./kafka-replay.sh -d 0 -r 5 -h 5 -t 1
@@ -21,6 +21,20 @@ docker exec -ti cassandra cqlsh
 
 # publish gas for 5 households
 ./kafka-replay.sh -d 0 -r 5 -h 5 -t 3
+
+## -- high throughput
+
+# publish electricity for 5 households
+docker run --label=electricity-publisher --label=ece-publisher --network=host -d auth-ece/publisher:0.2.0 \
+    -r 5 -d 0 -s 0 -e 4 -t electricity -c 10000
+
+# publish water for 5 households
+docker run --label=water-publisher --label=ece-publisher --network=host -d auth-ece/publisher:0.2.0 \
+    -r 5 -d 0 -s 0 -e 4 -t water -c 10000
+
+# publish gas for 5 households
+docker run --label=gas-publisher --label=ece-publisher --network=host -d auth-ece/publisher:0.2.0 \
+    -r 5 -d 0 -s 0 -e 4 -t gas -c 10000
 
 
 # ---- Console consumer
@@ -94,7 +108,7 @@ GET <GW_ID>
 
 # -- Publisher
 # remove all publishers
-docker rm --force  $(docker ps --filter ancestor=auth-ece/publisher:0.1.0 -q)
+docker rm --force  $(docker ps --filter label=ece-publisher -q)
 # remove all electricity publishers
 docker rm --force  $(docker ps --filter label=electricity-publisher -q)
 # remove all  water publishers
@@ -120,5 +134,6 @@ docker rm --force  $(docker ps --filter label=cassandra-writer -q)
 docker exec -i kafka kafka-streams-application-reset --application-id metrics-aggregates-60 \
                                       --input-topics metrics \
                                       --bootstrap-servers kafka:9092 \
-                                      --zookeeper zookeeper:32181
+                                      --zookeeper zookeeper:32181 \
+                                      --force
 

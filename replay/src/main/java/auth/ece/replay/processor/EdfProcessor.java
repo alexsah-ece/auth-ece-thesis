@@ -17,8 +17,8 @@ import java.util.Locale;
 @Log4j2
 public class EdfProcessor extends DatasetProcessor {
 
-    public EdfProcessor(int householdId) {
-        super(householdId);
+    public EdfProcessor(List<Integer> householdIdList) {
+        super(householdIdList);
     }
 
     @Override
@@ -29,10 +29,12 @@ public class EdfProcessor extends DatasetProcessor {
     private List<Metric> edfDatasetToMetrics(EdfMetric edfMetric) {
         Instant timestamp = getTimestamp(edfMetric);
         ArrayList<Metric> metrics = new ArrayList<>();
-        metrics.add(getActivePower(timestamp, edfMetric));
-        metrics.add(getReactivePower(timestamp, edfMetric));
-        metrics.add(getVoltage(timestamp, edfMetric));
-        metrics.add(getIntensity(timestamp, edfMetric));
+        for(String id: gatewayIdList) {
+            metrics.add(getActivePower(timestamp, edfMetric, id));
+            metrics.add(getReactivePower(timestamp, edfMetric, id));
+            metrics.add(getVoltage(timestamp, edfMetric, id));
+            metrics.add(getIntensity(timestamp, edfMetric, id));
+        }
         return metrics;
     }
 
@@ -45,47 +47,47 @@ public class EdfProcessor extends DatasetProcessor {
         return instant;
     }
 
-    private Metric getActivePower(Instant timestamp, EdfMetric edfMetric) {
+    private Metric getActivePower(Instant timestamp, EdfMetric edfMetric, String gatewayId) {
         double coEff = 0.001;
         return Metric.builder()
                 .gateway(gatewayId)
                 .metricType(MetricType.ELECTRICITY)
                 .metricAttribute(MetricAttribute.ACTIVE_POWER)
                 .timestamp(timestamp)
-                .value(getAdjustedValue(edfMetric.getReactivePower().doubleValue(), coEff))
+                .value(getAdjustedValue(edfMetric.getReactivePower().doubleValue(), coEff, gatewayId))
                 .build();
     }
 
-    private Metric getReactivePower(Instant timestamp, EdfMetric edfMetric) {
+    private Metric getReactivePower(Instant timestamp, EdfMetric edfMetric, String gatewayId) {
         double coEff = 0.001;
         return Metric.builder()
                 .gateway(gatewayId)
                 .metricType(MetricType.ELECTRICITY)
                 .metricAttribute(MetricAttribute.REACTIVE_POWER)
                 .timestamp(timestamp)
-                .value(getAdjustedValue(edfMetric.getActivePower().doubleValue(), coEff))
+                .value(getAdjustedValue(edfMetric.getActivePower().doubleValue(), coEff, gatewayId))
                 .build();
     }
 
-    private Metric getVoltage(Instant timestamp, EdfMetric edfMetric) {
+    private Metric getVoltage(Instant timestamp, EdfMetric edfMetric, String gatewayId) {
         double coEff = 0.001;
         return Metric.builder()
                 .gateway(gatewayId)
                 .metricType(MetricType.ELECTRICITY)
                 .metricAttribute(MetricAttribute.VOLTAGE)
                 .timestamp(timestamp)
-                .value(getAdjustedValue(edfMetric.getVoltage().doubleValue(), coEff))
+                .value(getAdjustedValue(edfMetric.getVoltage().doubleValue(), coEff, gatewayId))
                 .build();
     }
 
-    private Metric getIntensity(Instant timestamp, EdfMetric edfMetric) {
+    private Metric getIntensity(Instant timestamp, EdfMetric edfMetric, String gatewayId) {
         double coEff = 0.001;
         return Metric.builder()
                 .gateway(gatewayId)
                 .metricType(MetricType.ELECTRICITY)
                 .metricAttribute(MetricAttribute.INTENSITY)
                 .timestamp(timestamp)
-                .value(getAdjustedValue(edfMetric.getIntensity().doubleValue(), coEff))
+                .value(getAdjustedValue(edfMetric.getIntensity().doubleValue(), coEff, gatewayId))
                 .build();
     }
 }
