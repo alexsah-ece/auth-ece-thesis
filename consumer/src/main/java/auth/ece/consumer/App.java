@@ -5,6 +5,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.cli.*;
+import org.checkerframework.checker.units.qual.A;
 
 import java.time.temporal.ChronoUnit;
 
@@ -13,6 +14,8 @@ public class App {
 
     private static final String SOURCE_TOPIC_OPTION = "sourceTopic";
     private static final String WINDOW_DURATION_SECONDS_OPTION = "windowDurationSeconds";
+
+    private static final String DESIRED_MESSAGE_COUNT_OPTION = "desiredMessageCount";
 
     private static final String CLIENT_ID_OPTION = "clientId";
 
@@ -23,7 +26,8 @@ public class App {
     enum ApplicationType {
         AGGREGATOR,
         CONSOLE_CONSUMER,
-        CASSANDRA_WRITER
+        CASSANDRA_WRITER,
+        AGGREGATES_PERFORMANCE_TRACKER
     }
     public static void main(String[] args) {
         CommandLine cli = parseArgs(args);
@@ -55,11 +59,20 @@ public class App {
             log.warn("Was not able to parse any application type option, defaulting to CONSOLE_CONSUMER");
             applicationType = ApplicationType.CONSOLE_CONSUMER;
         }
+        long desiredMessageCount = 0;
+        try {
+            desiredMessageCount = Long.parseLong(cli.getOptionValue(DESIRED_MESSAGE_COUNT_OPTION));
+        } catch (Exception e) {
+            log.warn("Was not able to parse any desiredMessageCount option, defaulting to 0");
+        }
         if (applicationType.equals(ApplicationType.AGGREGATOR)) {
             MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
             aggregator.start();
         } else if (applicationType.equals(ApplicationType.CASSANDRA_WRITER)) {
             runCassandraSink(windowDurationSeconds, bucket);
+        } else if (applicationType.equals(ApplicationType.AGGREGATES_PERFORMANCE_TRACKER)) {
+            AggregatesPerformanceTracker tracker = new AggregatesPerformanceTracker(windowDurationSeconds, desiredMessageCount);
+            tracker.consume();
         } else {
             ConsoleConsumer consumer = new ConsoleConsumer();
             executeConsumer(consumer);
@@ -69,7 +82,7 @@ public class App {
     public static CommandLine parseArgs(String[] args) {
         Options options = new Options();
 
-        Option applicationType = new Option("s", APPLICATION_TYPE, true, "Application to run. Can" +
+        Option applicationType = new Option("t", APPLICATION_TYPE, true, "Application to run. Can" +
                 " be one of AGGREGATOR, CONSOLE_CONSUMER, CASSANDRA_WRITER");
 
         Option sourceTopic = new Option("s", SOURCE_TOPIC_OPTION, true, "Source topic");
@@ -83,11 +96,15 @@ public class App {
         Option bucket = new Option("b", BUCKET_OPTION, true, "Bucket to group metrics by when writing" +
                 " to cassandra");
 
+        Option desiredMessageCount = new Option("d", DESIRED_MESSAGE_COUNT_OPTION, true,
+                "Desired message count for tracking aggregator performance");
+
         options.addOption(applicationType);
         options.addOption(sourceTopic);
         options.addOption(windowDurationSeconds);
         options.addOption(clientId);
         options.addOption(bucket);
+        options.addOption(desiredMessageCount);
 
         HelpFormatter formatter = new HelpFormatter();
         CommandLineParser parser = new DefaultParser();
