@@ -69,7 +69,7 @@ public class App {
             MetricsAggregator aggregator = new MetricsAggregator(windowDurationSeconds, sourceTopic, clientId);
             aggregator.start();
         } else if (applicationType.equals(ApplicationType.CASSANDRA_WRITER)) {
-            runCassandraSink(windowDurationSeconds, bucket);
+            runCassandraSink(windowDurationSeconds, bucket, desiredMessageCount);
         } else if (applicationType.equals(ApplicationType.AGGREGATES_PERFORMANCE_TRACKER)) {
             AggregatesPerformanceTracker tracker = new AggregatesPerformanceTracker(windowDurationSeconds, desiredMessageCount);
             tracker.consume();
@@ -124,11 +124,11 @@ public class App {
         consumer.consume("metrics");
     }
 
-    public static void runCassandraSink(long windowDurationSeconds, ChronoUnit bucket) {
+    public static void runCassandraSink(long windowDurationSeconds, ChronoUnit bucket, long count) {
         try (CqlSession session = CqlSession.builder().build()) {
             String tableName = CassandraSink.getTargetTableName(windowDurationSeconds);
             CassandraDao dao = new CassandraDao(session, tableName);
-            CassandraSink sink = new CassandraSink(dao, bucket, windowDurationSeconds);
+            CassandraSink sink = new CassandraSink(dao, bucket, windowDurationSeconds, count);
             sink.consume();
         }
     }

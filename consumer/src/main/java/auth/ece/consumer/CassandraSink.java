@@ -28,10 +28,13 @@ public class CassandraSink {
 
     private final CassandraDao cassandraDao;
 
-    public CassandraSink(CassandraDao cassandraDao, ChronoUnit bucket, long windowDurationSeconds) {
+    private final long desiredMessageCount;
+
+    public CassandraSink(CassandraDao cassandraDao, ChronoUnit bucket, long windowDurationSeconds, long desiredMessageCount) {
         this.windowDurationSeconds = windowDurationSeconds;
         this.cassandraDao = cassandraDao;
         this.bucket = bucket;
+        this.desiredMessageCount = desiredMessageCount;
 
         this.sourceTopic = MetricsAggregator.getTargetTopic(windowDurationSeconds);
 
@@ -48,15 +51,38 @@ public class CassandraSink {
 
     public void consume() {
         consumer.subscribe(Arrays.asList(sourceTopic));
+        long consumerStartedAt = System.currentTimeMillis();
+        log.info(String.format("Consumer started at %d", consumerStartedAt));
+        long count = 0;
+        long firstMessageReceivedAt = 0;
+        long desiredCountReachedAt;
         try {
             while (true) {
                 ConsumerRecords<String, CustomAggregate> records = consumer.poll(100);
                 for (ConsumerRecord<String, CustomAggregate> record : records) {
+                    count += 1;
+                    if (count == 1) {
+                        firstMessageReceivedAt = System.currentTimeMillis();
+                        log.info(String.format("First message received at %d", firstMessageReceivedAt));
+                    }
                     var customAggregate = record.value();
                     var aggMetric = transformToAggMetric(customAggregate);
-                    log.info("offset = {}, key = {}, value = {}",
+                    log.debug("offset = {}, key = {}, value = {}",
                             record.offset(), record.key(), aggMetric);
                     insertToCassandra(customAggregate.getGateway(), aggMetric);
+                    if (count == desiredMessageCount) {
+                        desiredCountReachedAt = System.currentTimeMillis();
+                        log.info(String.format("Inserted messages (%d) bigger or equal compared to desired %d",
+                                count, desiredMessageCount)
+                        );
+                        log.info(String.format("Desired count reached at %d", desiredCountReachedAt));
+                        log.info(String.format("Millis since consumer start: %d",
+                                desiredCountReachedAt - consumerStartedAt)
+                        );
+                        log.info(String.format("Millis since first message received: %d",
+                                desiredCountReachedAt - firstMessageReceivedAt)
+                        );
+                    }
                 }
             }
         } finally {
