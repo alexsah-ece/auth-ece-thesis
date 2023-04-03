@@ -64,7 +64,7 @@ select * from metrics.metrics_aggregates_3600
 select * from metrics.metrics_aggregates_86400
     where gateway='4'
     and metric='ELECTRICITY'
-    and attribute='ACTIVE_POWER';
+    and attribute='VOLTAGE';
 
 
 
@@ -81,6 +81,8 @@ select * from metrics.metrics_aggregates_600
 select * from metrics.metrics_aggregates_3600
     where gateway='0'
     and metric='WATER'
-    and attribute='WATER_SUMMATION'
-    and bucket='2012-04-01';
+    and attribute='WATER_IDD'
+    and bucket='2012-04-01'
+    and windowstart >= '2012-04-01 22:00:00'
+    and windowstart <= '2012-04-02 04:00:00';
 
